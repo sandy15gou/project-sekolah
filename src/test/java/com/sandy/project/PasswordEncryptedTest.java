@@ -15,12 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 @ActiveProfiles("default")
 @Slf4j
 public class PasswordEncryptedTest {
-
-	@Autowired
-	private PasswordEncoder passwordEncoder;
-	
-	@Test
-	public void encryptPassword() {
-		log.info("password {}", passwordEncoder.encode("test123"));
-	}
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
+    @Test
+    public void encryptPassword() {
+        log.info("password {}", passwordEncoder.encode("test1234"));
+    }
 }

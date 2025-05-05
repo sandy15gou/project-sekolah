@@ -9,9 +9,9 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       maximum-pool-size: 10
-    url: jdbc:postgresql://127.0.0.1/book_catalog?reWriteBatchedInserts=true
-    username: subrutin
-    password: subrutin
+    url: jdbc:postgresql://localhost:5432/project_sekolah?user=sandy&password=015015
+    username: sandy
+    password: 015015
   jpa:
     database: POSTGRESQL
     hibernate:
