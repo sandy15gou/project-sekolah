@@ -18,46 +18,59 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
-public class UsernamePasswordAuthProcessingFilter extends AbstractAuthenticationProcessingFilter{
+@Slf4j
+public class UsernamePasswordAuthProcessingFilter extends AbstractAuthenticationProcessingFilter {
 	
 	private final ObjectMapper objectMapper;
 	
 	private final AuthenticationSuccessHandler successHandler;
 	
 	private final AuthenticationFailureHandler failureHandler;
-
-	public UsernamePasswordAuthProcessingFilter(String defaultFilterProcessesUrl, ObjectMapper objectMapper, AuthenticationSuccessHandler successHandler, 
-			AuthenticationFailureHandler failureHandler) {
+	
+	public UsernamePasswordAuthProcessingFilter(String defaultFilterProcessesUrl, ObjectMapper objectMapper, AuthenticationSuccessHandler successHandler,
+												AuthenticationFailureHandler failureHandler) {
 		super(defaultFilterProcessesUrl);
 		this.objectMapper = objectMapper;
 		this.successHandler = successHandler;
 		this.failureHandler = failureHandler;
 	}
-
+	
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException, IOException, ServletException {
-		LoginRequestDTO dto = objectMapper.readValue(request.getReader(), LoginRequestDTO.class);
-		if(StringUtils.isBlank(dto.username()) || StringUtils.isBlank(dto.password())) {
-			throw new BadRequestException("username.password.shouldbe.provided");
+		log.info("Memproses permintaan login di path: {}", request.getRequestURI());
+		
+		try {
+			LoginRequestDTO dto = objectMapper.readValue(request.getReader(), LoginRequestDTO.class);
+			log.info("Menerima permintaan login untuk username: {}", dto.username());
+			
+			if(StringUtils.isBlank(dto.username()) || StringUtils.isBlank(dto.password())) {
+				log.error("Username atau password kosong");
+				throw new BadRequestException("username.password.shouldbe.provided");
+			}
+			
+			UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(dto.username(), dto.password());
+			log.info("Melanjutkan ke proses autentikasi...");
+			return this.getAuthenticationManager().authenticate(token);
+		} catch (Exception e) {
+			log.error("Error saat memproses autentikasi: {}", e.getMessage());
+			throw e;
 		}
-		UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(dto.username(), dto.password());
-		return this.getAuthenticationManager().authenticate(token);
 	}
-
+	
 	@Override
 	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
-			Authentication authResult) throws IOException, ServletException {
+											Authentication authResult) throws IOException, ServletException {
+		log.info("Autentikasi berhasil! Menjalankan successHandler...");
 		this.successHandler.onAuthenticationSuccess(request, response, authResult);
 	}
-
+	
 	@Override
 	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationException failed) throws IOException, ServletException {
+											  AuthenticationException failed) throws IOException, ServletException {
+		log.error("Autentikasi gagal: {}", failed.getMessage());
 		this.failureHandler.onAuthenticationFailure(request, response, failed);
 	}
-	
-	
-
 }

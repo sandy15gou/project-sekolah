@@ -3,6 +3,7 @@ package com.sandy.project.service.impl;
 
 import com.sandy.project.domain.Student;
 import com.sandy.project.dto.StudentCreateDTO;
+import com.sandy.project.dto.StudentDetailDTO;
 import com.sandy.project.dto.StudentResponseDTO;
 import com.sandy.project.dto.StudentUpdateDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -47,6 +47,21 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public void deleteStudent(String studentId) {
     
+    }
+    @Override
+    public StudentDetailDTO findStudentDetail(String id) {
+        Student student = studentRepository.findBySecureId(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+        
+        StudentDetailDTO dto = new StudentDetailDTO();
+        dto.setSecureId(student.getSecureId());
+        dto.setStudentName(student.getName());
+        dto.setStudentId(student.getId().toString());
+        dto.setStudentBirthDate(student.getBirthDate().toEpochDay());
+        dto.setStudentGender(student.getGender());
+        dto.setStudentAddress(student.getAddress());
+        
+        return dto;
     }
     
     

@@ -3,6 +3,7 @@ package com.sandy.project.web;
 import java.net.URI;
 import java.util.List;
 
+import com.sandy.project.dto.StudentDetailDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,5 +33,24 @@ public class StudentResource {
     public ResponseEntity<Void> createNewStudent(@RequestBody @Valid List<StudentCreateDTO> dto){
         studentService.createNewStudent(dto);
         return ResponseEntity.created(URI.create("/student")).build();
+    }
+    
+    @GetMapping("/v1/student/{id}")
+    public ResponseEntity<StudentDetailDTO> findStudentDetail(@PathVariable String id) {
+        StudentDetailDTO dto = studentService.findStudentDetail(id);
+        return ResponseEntity.ok(dto);
+    }
+    
+    @PutMapping("/v1/student/{id}")
+    public ResponseEntity<Void> updateStudent(@PathVariable String id,
+                                              @RequestBody @Valid StudentUpdateDTO dto) {
+        studentService.updateStudent(id, dto);
+        return ResponseEntity.ok().build();
+    }
+    
+    @DeleteMapping("/v1/student/{id}")
+    public ResponseEntity<Void> deleteStudent(@PathVariable String id) {
+        studentService.deleteStudent(id);
+        return ResponseEntity.ok().build();
     }
 }

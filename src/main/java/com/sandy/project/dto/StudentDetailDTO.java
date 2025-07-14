@@ -8,14 +8,14 @@ import java.io.Serializable;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Data
-public class TeacherDetailDTO implements Serializable {
-
-    private static final long serialVersionUID = -8900296335470876264L;
+public class StudentDetailDTO implements Serializable {
+    
+    private static final long serialVersionUID = 814361125017230499L;
     
     private String secureId;
-    private String teacherId;
-    private String teacherName;
-    private Long teacherBirthDate;
-    private String teacherGender;
-    private String teacherAddress;
+    private String studentName;
+    private String studentId;
+    private Long studentBirthDate;
+    private String studentGender;
+    private String studentAddress;
 }

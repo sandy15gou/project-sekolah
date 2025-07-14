@@ -1,6 +1,7 @@
 package com.sandy.project.service;
 
 import com.sandy.project.dto.StudentCreateDTO;
+import com.sandy.project.dto.StudentDetailDTO;
 import com.sandy.project.dto.StudentResponseDTO;
 import com.sandy.project.dto.StudentUpdateDTO;
 
@@ -16,6 +17,8 @@ public interface StudentService {
     public void updateStudent(String studentId, StudentUpdateDTO dto);
     
     public void deleteStudent(String studentId);
+    
+    StudentDetailDTO findStudentDetail(String id);
     
     //	public List<Author> findAuthors(List<String> authorIdList);
     //

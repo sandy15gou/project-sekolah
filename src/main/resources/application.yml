@@ -1,6 +1,9 @@
-logging:  
-  level:    
+logging:
+  level:
     '[com.sandy.project]': TRACE
+    'org.springframework.security': DEBUG
+    'org.hibernate.SQL': DEBUG
+    'org.hibernate.type.descriptor.sql.BasicBinder': TRACE
 
 spring:
   datasource:
@@ -60,3 +63,4 @@ spring:
       on-profile: production
 server:
   port: 80
+

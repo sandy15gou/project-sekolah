@@ -13,7 +13,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import com.sandy.project.dto.StudentCreateDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,14 +22,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamicUpdate
-@Table(name = "students")
-@SQLDelete(sql = "UPDATE students SET deleted = true WHERE id = ?")
+@Table(name = "teachers")
+@SQLDelete(sql = "UPDATE teachers SET deleted = true WHERE id = ?")
 @Where(clause = "deleted = false")
-public class Student extends AbstractBaseEntity {
+public class Teacher extends AbstractBaseEntity {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "student_generator")
-    @SequenceGenerator(name = "student_generator", sequenceName = "student_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "teacher_generator")
+    @SequenceGenerator(name = "teacher_generator", sequenceName = "teacher_seq")
     private Long id;
     
     @Column(name = "name", nullable = false)
