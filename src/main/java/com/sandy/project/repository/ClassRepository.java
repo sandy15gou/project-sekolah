@@ -1,0 +1,13 @@
+package com.sandy.project.repository;
+
+import com.sandy.project.domain.Class;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ClassRepository extends JpaRepository<Class, Long> {
+    Optional<Class> findBySecureId(String secureId);
+    List<Class> findByHomeroomTeacherSecureId(String teacherSecureId);
+    List<Class> findByAcademicYear(String academicYear);
+}
