@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.sandy.project.validator.annotation.ValidAuthorName;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -21,8 +22,8 @@ public class StudentUpdateDTO implements Serializable {
     @NotBlank(message = "NIS tidak boleh kosong")
     private String studentId; // Student Id
     
-    @NotBlank(message = "Tanggal lahir tidak boleh kosong")
-    private String studentBirthDate;
+    @NotNull(message = "Tanggal lahir tidak boleh kosong")
+    private Long studentBirthDate;
     
     @NotBlank(message = "Jenis kelamin tidak boleh kosong")
     private String studentGender;
@@ -30,3 +31,4 @@ public class StudentUpdateDTO implements Serializable {
     @NotBlank(message = "Alamat tidak boleh kosong")
     private String studentAddress;
 }
+

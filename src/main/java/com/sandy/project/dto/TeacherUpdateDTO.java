@@ -1,6 +1,7 @@
 package com.sandy.project.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
 
@@ -14,8 +15,8 @@ public class TeacherUpdateDTO implements Serializable {
     @NotBlank(message = "NIP tidak boleh kosong")
     private String teacherId;
     
-    @NotBlank(message = "Tanggal lahir tidak boleh kosong")
-    private String teacherBirthDate;
+    @NotNull(message = "Tanggal lahir tidak boleh kosong")
+    private Long teacherBirthDate;
     
     @NotBlank(message = "Jenis kelamin tidak boleh kosong")
     private String teacherGender;

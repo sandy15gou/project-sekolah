@@ -6,7 +6,6 @@ import com.sandy.project.domain.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 
-
 public interface StudentRepository extends JpaRepository<Student, Long> {
     //method name convention
     //find+keyword
@@ -24,3 +23,4 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     //sql -> select s from Student s where s.student_name = :studentName
     public List<Student> findByNameLike(String studentName);
 }
+

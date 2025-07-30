@@ -14,9 +14,9 @@ public class ScheduleDetailDTO implements Serializable {
     
     private static final long serialVersionUID = 6915573265799690501L;
     private String secureId;
-    private SchoolClassResponseDTO schoolClass;
+    private ClassDetailDTO schoolClass;
     private SubjectResponseDTO subject;
-    private TeacherResponseDTO teacher;
+    private TeacherDetailDTO teacher;
     private String day;
     private String startTime;
     private String endTime;

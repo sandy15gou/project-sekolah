@@ -2,17 +2,24 @@ package com.sandy.project.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 import java.util.List;
 import java.util.UUID;
 
 @Data
+@DynamicUpdate
+@SQLDelete(sql = "UPDATE classes SET deleted = true WHERE id = ?")
+@Where(clause = "deleted = false")
 @Entity
 @Table(name = "classes")
-public class Class {
+public class Class extends AbstractBaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "class_generator")
+    @SequenceGenerator(name = "class_generator", sequenceName = "class_seq")
     private Long id;
     
     @Column(name = "secure_id", nullable = false, unique = true)
@@ -31,13 +38,15 @@ public class Class {
     @JoinColumn(name = "homeroom_teacher_id")
     private Teacher homeroomTeacher;
     
-    @ManyToMany
-    @JoinTable(
-            name = "class_students",
-            joinColumns = @JoinColumn(name = "class_id"),
-            inverseJoinColumns = @JoinColumn(name = "student_id")
-    )
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "class_id", referencedColumnName = "id")
     private List<Student> students;
+    
+    @Column(name = "max_capacity", columnDefinition = "integer default 30")
+    private Integer maxCapacity = 30;
+    
+    @Column(name = "description")
+    private String description;
     
     @PrePersist
     public void prePersist() {

@@ -34,6 +34,8 @@ public class StudentServiceImpl implements StudentService {
         List<Student> students = dtos.stream().map((dtoItem) -> {
             Student student = new Student();
             student.setName(dtoItem.getStudentName());
+            student.setGender(dtoItem.getStudentGender());
+            student.setAddress(dtoItem.getStudentAddress());
             student.setBirthDate(LocalDate.ofEpochDay(dtoItem.getStudentBirthDate()));
             return student;
         }).toList();
@@ -41,11 +43,23 @@ public class StudentServiceImpl implements StudentService {
     }
     @Override
     public void updateStudent(String studentId, StudentUpdateDTO dto) {
+        Student student = studentRepository.findBySecureId(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student Not Found"));
+        student.setName(dto.getStudentName());
+        student.setBirthDate(LocalDate.ofEpochDay(dto.getStudentBirthDate()));
+        student.setGender(dto.getStudentGender());
+        student.setAddress(dto.getStudentAddress());
+        studentRepository.save(student);
+        
+        
     
     }
     
     @Override
     public void deleteStudent(String studentId) {
+        Student student = studentRepository.findBySecureId(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+        studentRepository.delete(student);
     
     }
     @Override

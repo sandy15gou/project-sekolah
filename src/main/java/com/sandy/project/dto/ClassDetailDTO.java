@@ -11,4 +11,6 @@ public class ClassDetailDTO {
     private String academicYear;
     private TeacherDetailDTO homeroomTeacher;
     private List<StudentDetailDTO> students;
+    private List<ScheduleDetailDTO> schedules;
+    private List<SubjectResponseDTO> subjects;
 }

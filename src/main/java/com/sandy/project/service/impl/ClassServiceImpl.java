@@ -1,25 +1,28 @@
 package com.sandy.project.service.impl;
 
 import com.sandy.project.domain.Class;
-import com.sandy.project.domain.SchoolClass;
 import com.sandy.project.domain.Student;
 import com.sandy.project.domain.Teacher;
+import com.sandy.project.domain.Schedule;
+import com.sandy.project.domain.Subject;
 import com.sandy.project.dto.ClassDetailDTO;
-import com.sandy.project.dto.ClassRequestDTO;
 import com.sandy.project.dto.ClassRequestDTO;
 import com.sandy.project.dto.StudentDetailDTO;
 import com.sandy.project.dto.TeacherDetailDTO;
+import com.sandy.project.dto.ScheduleDetailDTO;
+import com.sandy.project.dto.SubjectResponseDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.ClassRepository;
 import com.sandy.project.repository.StudentRepository;
 import com.sandy.project.repository.TeacherRepository;
+import com.sandy.project.repository.ScheduleRepository;
+import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.service.ClassService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -28,11 +31,13 @@ public class ClassServiceImpl implements ClassService {
     private final ClassRepository classRepository;
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final SubjectRepository subjectRepository;
     
-   
+    
     @Override
     public void createNewClass(List<ClassRequestDTO> dtos) {
-        List<Class> classes = dtos.stream().map((dtoItem)->{
+        List<Class> classes = dtos.stream().map((dtoItem) -> {
             Class kelas = new Class();
             kelas.setClassName(dtoItem.getClassName());
             kelas.setAcademicYear(dtoItem.getAcademicYear());
@@ -43,7 +48,7 @@ public class ClassServiceImpl implements ClassService {
             return kelas;
         }).toList();
         classRepository.saveAll(classes);
-    
+        
     }
     
     @Override
@@ -57,7 +62,7 @@ public class ClassServiceImpl implements ClassService {
                 .orElseThrow(() -> new ResourceNotFoundException("Homeroom teacher not found")));
         classRepository.save(kelas);
         
-    
+        
     }
     
     @Override
@@ -65,22 +70,20 @@ public class ClassServiceImpl implements ClassService {
         Class kelas = classRepository.findBySecureId(classId)
                 .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
         
-
+        
         classRepository.delete(kelas);
-    
+        
     }
     
     @Override
     public ClassDetailDTO findClassDetail(String classId) {
         Class kelas = classRepository.findBySecureId(classId)
                 .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
-        
         ClassDetailDTO dto = new ClassDetailDTO();
         dto.setSecureId(kelas.getSecureId());
         dto.setClassName(kelas.getClassName());
         dto.setGradeLevel(kelas.getGradeLevel());
         dto.setAcademicYear(kelas.getAcademicYear());
-        
         TeacherDetailDTO teacherDto = new TeacherDetailDTO();
         Teacher homeroomTeacher = kelas.getHomeroomTeacher();
         if (homeroomTeacher != null) {
@@ -90,13 +93,76 @@ public class ClassServiceImpl implements ClassService {
             teacherDto.setTeacherBirthDate(homeroomTeacher.getBirthDate().toEpochDay());
             teacherDto.setTeacherGender(homeroomTeacher.getGender());
             teacherDto.setTeacherAddress(homeroomTeacher.getAddress());
-            
-            // ✅ SET teacher ke class DTO (yang missing!)
             dto.setHomeroomTeacher(teacherDto);
         }
-        
+        // Students
+        List<StudentDetailDTO> studentDTOs = kelas.getStudents() != null
+                ? kelas.getStudents().stream().map(student -> {
+            StudentDetailDTO studentDto = new StudentDetailDTO();
+            studentDto.setSecureId(student.getSecureId());
+            studentDto.setStudentId(student.getId().toString());
+            studentDto.setStudentName(student.getName());
+            studentDto.setStudentBirthDate(student.getBirthDate().toEpochDay());
+            studentDto.setStudentGender(student.getGender());
+            studentDto.setStudentAddress(student.getAddress());
+            return studentDto;
+        }).toList() : new ArrayList<>();
+        dto.setStudents(studentDTOs);
+        // Schedules
+        List<Schedule> schedules = scheduleRepository.findByClazz_SecureId(classId);
+        List<ScheduleDetailDTO> scheduleDTOs = schedules.stream().map(schedule -> {
+            ScheduleDetailDTO scheduleDto = new ScheduleDetailDTO();
+            scheduleDto.setSecureId(schedule.getSecureId());
+            scheduleDto.setDay(schedule.getDay());
+            scheduleDto.setStartTime(schedule.getStartTime());
+            scheduleDto.setEndTime(schedule.getEndTime());
+            scheduleDto.setSemester(schedule.getSemester());
+            // Subject
+            if (schedule.getSubject() != null) {
+                SubjectResponseDTO subjectDto = new SubjectResponseDTO();
+                subjectDto.setSecureId(schedule.getSubject().getSecureId());
+                subjectDto.setName(schedule.getSubject().getName());
+                scheduleDto.setSubject(subjectDto);
+            }
+            // Teacher
+            if (schedule.getTeacher() != null) {
+                TeacherDetailDTO tDto = new TeacherDetailDTO();
+                tDto.setSecureId(schedule.getTeacher().getSecureId());
+                tDto.setTeacherId(schedule.getTeacher().getId().toString());
+                tDto.setTeacherName(schedule.getTeacher().getName());
+                tDto.setTeacherBirthDate(schedule.getTeacher().getBirthDate() != null ? schedule.getTeacher().getBirthDate().toEpochDay() : null);
+                tDto.setTeacherGender(schedule.getTeacher().getGender());
+                tDto.setTeacherAddress(schedule.getTeacher().getAddress());
+                scheduleDto.setTeacher(tDto);
+            }
+            // Class (gunakan ClassDetailDTO sesuai field schoolClass di ScheduleDetailDTO)
+            if (schedule.getClazz() != null) {
+                ClassDetailDTO classDetailDto = new ClassDetailDTO();
+                classDetailDto.setSecureId(schedule.getClazz().getSecureId());
+                classDetailDto.setClassName(schedule.getClazz().getClassName());
+                classDetailDto.setGradeLevel(schedule.getClazz().getGradeLevel());
+                classDetailDto.setAcademicYear(schedule.getClazz().getAcademicYear());
+                // Tidak perlu set schedules, students, subjects untuk mencegah recursive/loop
+                scheduleDto.setSchoolClass(classDetailDto);
+            }
+            return scheduleDto;
+        }).toList();
+        dto.setSchedules(scheduleDTOs);
+        // Subjects (unique from schedules)
+        List<SubjectResponseDTO> subjectDTOs = schedules.stream()
+                .map(Schedule::getSubject)
+                .filter(subject -> subject != null)
+                .distinct()
+                .map(subject -> {
+                    SubjectResponseDTO subjectDto = new SubjectResponseDTO();
+                    subjectDto.setSecureId(subject.getSecureId());
+                    subjectDto.setName(subject.getName());
+                    return subjectDto;
+                }).toList();
+        dto.setSubjects(subjectDTOs);
         return dto;
     }
+    
     @Override
     public List<ClassDetailDTO> findAllClasses() {
         List<Class> classes = classRepository.findAll();
@@ -136,15 +202,49 @@ public class ClassServiceImpl implements ClassService {
             return dto;
         }).toList();
     }
+    
     @Override
     public void addStudentToClass(String classId, String studentId) {
-    
+        // Cari class berdasarkan secureId
+        Class kelas = classRepository.findBySecureId(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
+        
+        // Cari student berdasarkan secureId
+        Student student = studentRepository.findBySecureId(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+        
+        // Inisialisasi list students jika null
+        if (kelas.getStudents() == null) {
+            kelas.setStudents(new ArrayList<>());
+        }
+        
+        // Cek apakah student sudah ada di class (avoid duplicate)
+        boolean studentExists = kelas.getStudents().stream()
+                .anyMatch(s -> s.getSecureId().equals(studentId));
+        
+        if (!studentExists) {
+            // Tambahkan student ke class
+            kelas.getStudents().add(student);
+            // Save class - Hibernate akan handle junction table secara otomatis
+            classRepository.save(kelas);
+        }
     }
     
     @Override
     public void removeStudentFromClass(String classId, String studentId) {
-    
+        // Cari class berdasarkan secureId
+        Class kelas = classRepository.findBySecureId(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
+        
+        // Tidak perlu mencari student secara eksplisit, cukup remove dari collection
+        if (kelas.getStudents() != null) {
+            // Remove student dari class berdasarkan secureId
+            boolean removed = kelas.getStudents().removeIf(s -> s.getSecureId().equals(studentId));
+            
+            // Save class - Hibernate akan handle junction table secara otomatis
+            if (removed) {
+                classRepository.save(kelas);
+            }
+        }
     }
-    
-    // Implementasi method lainnya
 }

@@ -72,6 +72,13 @@ public class TeacherServiceImpl implements TeacherService {
     
     @Override
     public TeacherResponseDTO findTeacherById(String id) {
-        return null;
+        Teacher teacher = teacherRepository.findBySecureId(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
+        
+        TeacherResponseDTO dto = new TeacherResponseDTO();
+        dto.setTeacherName(teacher.getName());
+        dto.setBirthDate(teacher.getBirthDate().toEpochDay());
+        return dto;
+        
     }
 }
