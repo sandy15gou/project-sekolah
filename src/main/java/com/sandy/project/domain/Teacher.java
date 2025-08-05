@@ -1,6 +1,7 @@
 package com.sandy.project.domain;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -11,6 +12,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -32,6 +34,9 @@ public class Teacher extends AbstractBaseEntity {
     @SequenceGenerator(name = "teacher_generator", sequenceName = "teacher_seq")
     private Long id;
     
+    @Column(name = "secure_id", nullable = false, unique = true)
+    private String secureId;
+    
     @Column(name = "name", nullable = false)
     private String name;
     
@@ -43,4 +48,11 @@ public class Teacher extends AbstractBaseEntity {
     
     @Column(name = "address")
     private String address;
+    
+    @PrePersist
+    public void prePersist() {
+        if (this.secureId == null) {
+            this.secureId = UUID.randomUUID().toString();
+        }
+    }
 }

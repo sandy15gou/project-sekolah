@@ -10,6 +10,7 @@ import com.sandy.project.dto.ClassRequestDTO;
 import com.sandy.project.dto.StudentDetailDTO;
 import com.sandy.project.dto.TeacherDetailDTO;
 import com.sandy.project.dto.ScheduleDetailDTO;
+import com.sandy.project.dto.SubjectDetailDTO;
 import com.sandy.project.dto.SubjectResponseDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.ClassRepository;
@@ -20,12 +21,15 @@ import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.service.ClassService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Transactional
 public class ClassServiceImpl implements ClassService {
     
     private final ClassRepository classRepository;
@@ -79,22 +83,28 @@ public class ClassServiceImpl implements ClassService {
     public ClassDetailDTO findClassDetail(String classId) {
         Class kelas = classRepository.findBySecureId(classId)
                 .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
+        
         ClassDetailDTO dto = new ClassDetailDTO();
         dto.setSecureId(kelas.getSecureId());
         dto.setClassName(kelas.getClassName());
         dto.setGradeLevel(kelas.getGradeLevel());
         dto.setAcademicYear(kelas.getAcademicYear());
+        dto.setMaxCapacity(kelas.getMaxCapacity());
+        dto.setDescription(kelas.getDescription());
+        
+        // Homeroom Teacher
         TeacherDetailDTO teacherDto = new TeacherDetailDTO();
         Teacher homeroomTeacher = kelas.getHomeroomTeacher();
         if (homeroomTeacher != null) {
             teacherDto.setSecureId(homeroomTeacher.getSecureId());
             teacherDto.setTeacherId(homeroomTeacher.getId().toString());
             teacherDto.setTeacherName(homeroomTeacher.getName());
-            teacherDto.setTeacherBirthDate(homeroomTeacher.getBirthDate().toEpochDay());
+            teacherDto.setTeacherBirthDate(homeroomTeacher.getBirthDate() != null ? homeroomTeacher.getBirthDate().toEpochDay() : null);
             teacherDto.setTeacherGender(homeroomTeacher.getGender());
             teacherDto.setTeacherAddress(homeroomTeacher.getAddress());
             dto.setHomeroomTeacher(teacherDto);
         }
+        
         // Students
         List<StudentDetailDTO> studentDTOs = kelas.getStudents() != null
                 ? kelas.getStudents().stream().map(student -> {
@@ -102,12 +112,13 @@ public class ClassServiceImpl implements ClassService {
             studentDto.setSecureId(student.getSecureId());
             studentDto.setStudentId(student.getId().toString());
             studentDto.setStudentName(student.getName());
-            studentDto.setStudentBirthDate(student.getBirthDate().toEpochDay());
+            studentDto.setStudentBirthDate(student.getBirthDate() != null ? student.getBirthDate().toEpochDay() : null);
             studentDto.setStudentGender(student.getGender());
             studentDto.setStudentAddress(student.getAddress());
             return studentDto;
         }).toList() : new ArrayList<>();
         dto.setStudents(studentDTOs);
+        
         // Schedules
         List<Schedule> schedules = scheduleRepository.findByClazz_SecureId(classId);
         List<ScheduleDetailDTO> scheduleDTOs = schedules.stream().map(schedule -> {
@@ -117,6 +128,7 @@ public class ClassServiceImpl implements ClassService {
             scheduleDto.setStartTime(schedule.getStartTime());
             scheduleDto.setEndTime(schedule.getEndTime());
             scheduleDto.setSemester(schedule.getSemester());
+            
             // Subject
             if (schedule.getSubject() != null) {
                 SubjectResponseDTO subjectDto = new SubjectResponseDTO();
@@ -124,6 +136,7 @@ public class ClassServiceImpl implements ClassService {
                 subjectDto.setName(schedule.getSubject().getName());
                 scheduleDto.setSubject(subjectDto);
             }
+            
             // Teacher
             if (schedule.getTeacher() != null) {
                 TeacherDetailDTO tDto = new TeacherDetailDTO();
@@ -135,6 +148,7 @@ public class ClassServiceImpl implements ClassService {
                 tDto.setTeacherAddress(schedule.getTeacher().getAddress());
                 scheduleDto.setTeacher(tDto);
             }
+            
             // Class (gunakan ClassDetailDTO sesuai field schoolClass di ScheduleDetailDTO)
             if (schedule.getClazz() != null) {
                 ClassDetailDTO classDetailDto = new ClassDetailDTO();
@@ -148,18 +162,68 @@ public class ClassServiceImpl implements ClassService {
             return scheduleDto;
         }).toList();
         dto.setSchedules(scheduleDTOs);
+        
         // Subjects (unique from schedules)
-        List<SubjectResponseDTO> subjectDTOs = schedules.stream()
+        List<SubjectDetailDTO> subjectDTOs = schedules.stream()
                 .map(Schedule::getSubject)
                 .filter(subject -> subject != null)
                 .distinct()
                 .map(subject -> {
-                    SubjectResponseDTO subjectDto = new SubjectResponseDTO();
+                    SubjectDetailDTO subjectDto = new SubjectDetailDTO();
                     subjectDto.setSecureId(subject.getSecureId());
                     subjectDto.setName(subject.getName());
+                    subjectDto.setDescription(subject.getDescription());
+                    
+                    // Eligible teachers for this subject
+                    if (subject.getEligibleTeachers() != null) {
+                        List<TeacherDetailDTO> eligibleTeacherDTOs = subject.getEligibleTeachers().stream()
+                                .map(teacher -> {
+                                    TeacherDetailDTO tDto = new TeacherDetailDTO();
+                                    tDto.setSecureId(teacher.getSecureId());
+                                    tDto.setTeacherId(teacher.getId().toString());
+                                    tDto.setTeacherName(teacher.getName());
+                                    tDto.setTeacherBirthDate(teacher.getBirthDate() != null ? teacher.getBirthDate().toEpochDay() : null);
+                                    tDto.setTeacherGender(teacher.getGender());
+                                    tDto.setTeacherAddress(teacher.getAddress());
+                                    return tDto;
+                                }).toList();
+                        subjectDto.setEligibleTeachers(eligibleTeacherDTOs);
+                    }
                     return subjectDto;
                 }).toList();
         dto.setSubjects(subjectDTOs);
+        
+        // All Teachers teaching in this class (unique from schedules)
+        List<TeacherDetailDTO> teacherDTOs = schedules.stream()
+                .map(Schedule::getTeacher)
+                .filter(teacher -> teacher != null)
+                .distinct()
+                .map(teacher -> {
+                    TeacherDetailDTO tDto = new TeacherDetailDTO();
+                    tDto.setSecureId(teacher.getSecureId());
+                    tDto.setTeacherId(teacher.getId().toString());
+                    tDto.setTeacherName(teacher.getName());
+                    tDto.setTeacherBirthDate(teacher.getBirthDate() != null ? teacher.getBirthDate().toEpochDay() : null);
+                    tDto.setTeacherGender(teacher.getGender());
+                    tDto.setTeacherAddress(teacher.getAddress());
+                    return tDto;
+                }).collect(Collectors.toList());
+        
+        // Add homeroom teacher to the list if not already present
+        if (homeroomTeacher != null) {
+            boolean homeroomAlreadyInList = teacherDTOs.stream()
+                    .anyMatch(t -> t.getSecureId().equals(homeroomTeacher.getSecureId()));
+            if (!homeroomAlreadyInList) {
+                teacherDTOs.add(teacherDto);
+            }
+        }
+        dto.setTeachers(teacherDTOs);
+        
+        // Statistics
+        dto.setCurrentStudentCount(studentDTOs.size());
+        dto.setTotalSubjects(subjectDTOs.size());
+        dto.setTotalTeachers(teacherDTOs.size());
+        
         return dto;
     }
     

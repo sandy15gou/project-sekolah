@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -15,6 +16,9 @@ public class Subject extends AbstractBaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "secure_id", nullable = false, unique = true)
+    private String secureId;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -30,5 +34,11 @@ public class Subject extends AbstractBaseEntity {
         inverseJoinColumns = @JoinColumn(name = "teacher_id")
     )
     private List<Teacher> eligibleTeachers;
-}
 
+    @PrePersist
+    public void prePersist() {
+        if (this.secureId == null) {
+            this.secureId = UUID.randomUUID().toString();
+        }
+    }
+}
