@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Sekolah</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/modal.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>🏫 Sistem Manajemen Sekolah</h1>
+            </div>
+            <nav class="nav" id="mainNav" style="display: none;">
+                <a href="#" onclick="showPage('dashboard')">Dashboard</a>
+                <a href="#" onclick="showPage('classes')">Kelas</a>
+                <a href="#" onclick="showPage('students')">Murid</a>
+                <a href="#" onclick="showPage('teachers')">Guru</a>
+                <a href="#" onclick="showPage('subjects')">Mata Pelajaran</a>
+                <a href="#" onclick="showPage('schedules')">Jadwal</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </nav>
+        </header>
+
+        <!-- Login Form -->
+        <div id="loginPage" class="login-container">
+            <div class="login-form">
+                <h2>Login Sistem</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn-login">Login</button>
+                </form>
+                <div id="loginError" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="mainContent" style="display: none;">
+            <!-- Dashboard Page -->
+            <div id="dashboardPage" class="page active">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Kelas</h3>
+                        <span id="totalClasses">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Murid</h3>
+                        <span id="totalStudents">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Guru</h3>
+                        <span id="totalTeachers">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Mata Pelajaran</h3>
+                        <span id="totalSubjects">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classes Page -->
+            <div id="classesPage" class="page">
+                <h2>Manajemen Kelas</h2>
+                <button class="btn-primary" onclick="showModal('classModal')">Tambah Kelas Baru</button>
+                <div class="table-container">
+                    <table id="classesTable">
+                        <thead>
+                            <tr>
+                                <th>Nama Kelas</th>
+                                <th>Tingkat</th>
+                                <th>Tahun Ajaran</th>
+                                <th>Wali Kelas</th>
+                                <th>Jumlah Murid</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Students Page -->
+            <div id="studentsPage" class="page">
+                <h2>Manajemen Murid</h2>
+                <button class="btn-primary" onclick="showModal('studentModal')">Tambah Murid Baru</button>
+                <div class="table-container">
+                    <table id="studentsTable">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Tanggal Lahir</th>
+                                <th>Jenis Kelamin</th>
+                                <th>Alamat</th>
+                                <th>Kelas</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Teachers Page -->
+            <div id="teachersPage" class="page">
+                <h2>Manajemen Guru</h2>
+                <button class="btn-primary" onclick="showModal('teacherModal')">Tambah Guru Baru</button>
+                <div class="table-container">
+                    <table id="teachersTable">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Tanggal Lahir</th>
+                                <th>Jenis Kelamin</th>
+                                <th>Alamat</th>
+                                <th>Mata Pelajaran</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Subjects Page -->
+            <div id="subjectsPage" class="page">
+                <h2>Manajemen Mata Pelajaran</h2>
+                <button class="btn-primary" onclick="showModal('subjectModal')">Tambah Mata Pelajaran Baru</button>
+                <div class="table-container">
+                    <table id="subjectsTable">
+                        <thead>
+                            <tr>
+                                <th>Nama Mata Pelajaran</th>
+                                <th>Deskripsi</th>
+                                <th>Guru Pengajar</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Schedules Page -->
+            <div id="schedulesPage" class="page">
+                <h2>Manajemen Jadwal</h2>
+                <button class="btn-primary" onclick="showModal('scheduleModal')">Tambah Jadwal Baru</button>
+                <div class="table-container">
+                    <table id="schedulesTable">
+                        <thead>
+                            <tr>
+                                <th>Hari</th>
+                                <th>Waktu</th>
+                                <th>Kelas</th>
+                                <th>Mata Pelajaran</th>
+                                <th>Guru</th>
+                                <th>Semester</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Modals will be loaded from separate files -->
+    <div id="modalsContainer"></div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/modals.js"></script>
+</body>
+</html>

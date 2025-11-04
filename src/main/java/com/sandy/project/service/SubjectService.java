@@ -9,5 +9,6 @@ public interface SubjectService {
     void createSubject(SubjectDetailDTO dto);
     void updateSubject(String subjectId, SubjectDetailDTO dto);
     void deleteSubject(String subjectId);
+    void addEligibleTeacher(String subjectId, String teacherId);
+    void removeEligibleTeacher(String subjectId, String teacherId);
 }
-

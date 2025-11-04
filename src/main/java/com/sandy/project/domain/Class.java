@@ -34,13 +34,20 @@ public class Class extends AbstractBaseEntity {
     @Column(name = "academic_year", nullable = false)
     private String academicYear;
     
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "homeroom_teacher_id")
     private Teacher homeroomTeacher;
     
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_id", referencedColumnName = "id")
+    @JoinTable(
+        name = "class_students",
+        joinColumns = @JoinColumn(name = "class_id"),
+        inverseJoinColumns = @JoinColumn(name = "student_id")
+    )
     private List<Student> students;
+    
+    @OneToMany(mappedBy = "clazz", fetch = FetchType.LAZY)
+    private List<Schedule> schedules;
     
     @Column(name = "max_capacity", columnDefinition = "integer default 30")
     private Integer maxCapacity = 30;
@@ -50,6 +57,8 @@ public class Class extends AbstractBaseEntity {
     
     @PrePersist
     public void prePersist() {
-        this.secureId = UUID.randomUUID().toString();
+        if (this.secureId == null) {
+            this.secureId = UUID.randomUUID().toString();
+        }
     }
 }
