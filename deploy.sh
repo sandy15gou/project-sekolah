@@ -1,0 +1,18 @@
+#!/bin/bash
+echo "🚀 Memulai deployment aplikasi sekolah..."
+echo "📦 Menghentikan container yang ada..."
+docker-compose down
+echo "🔨 Building Docker image..."
+docker-compose build --no-cache
+echo "▶️ Menjalankan aplikasi..."
+docker-compose up -d
+echo "⏳ Menunggu aplikasi startup..."
+sleep 30
+echo "📊 Status container:"
+docker-compose ps
+echo "🏥 Mengecek health status..."
+curl -f http://localhost:8090/actuator/health || echo "Health check belum ready"
+echo "✅ Deployment selesai!"
+echo "🌐 Aplikasi dapat diakses di: http://localhost:8090"
+echo "📊 Health check: http://localhost:8090/actuator/health"
+echo "📚 API Documentation: http://localhost:8090/swagger-ui.html"

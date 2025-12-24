@@ -1,0 +1,39 @@
+# Target directory
+target/
+
+# Build artifacts (JANGAN block semua *.jar!)
+# target/*.jar
+*.war
+*.ear
+*.class
+
+# IDE files
+.idea/
+*.iml
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# PENTING: Jangan block .mvn folder dan maven-wrapper.jar!
+# !.mvn/wrapper/maven-wrapper.jar (tidak perlu ini karena tidak ada rule yang block)

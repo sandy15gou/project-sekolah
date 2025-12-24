@@ -9,49 +9,48 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/subjects")
 @AllArgsConstructor
 public class SubjectResource {
     
     private final SubjectService subjectService;
     
-    @PostMapping
+    @PostMapping("/v1/subjects")
     public ResponseEntity<String> createSubject(@RequestBody SubjectDetailDTO dto) {
         subjectService.createSubject(dto);
         return ResponseEntity.ok("Subject created successfully");
     }
     
-    @GetMapping
+    @GetMapping("/v1/subjects")
     public ResponseEntity<List<SubjectDetailDTO>> getAllSubjects() {
         List<SubjectDetailDTO> subjects = subjectService.findAllSubjects();
         return ResponseEntity.ok(subjects);
     }
     
-    @GetMapping("/{subjectId}")
+    @GetMapping("/v1/subjects/{subjectId}")
     public ResponseEntity<SubjectDetailDTO> getSubjectDetail(@PathVariable String subjectId) {
         SubjectDetailDTO subjectDetail = subjectService.findSubjectDetail(subjectId);
         return ResponseEntity.ok(subjectDetail);
     }
     
-    @PutMapping("/{subjectId}")
+    @PutMapping("/v1/subjects/{subjectId}")
     public ResponseEntity<String> updateSubject(@PathVariable String subjectId, @RequestBody SubjectDetailDTO dto) {
         subjectService.updateSubject(subjectId, dto);
         return ResponseEntity.ok("Subject updated successfully");
     }
     
-    @DeleteMapping("/{subjectId}")
+    @DeleteMapping("/v1/subjects/{subjectId}")
     public ResponseEntity<String> deleteSubject(@PathVariable String subjectId) {
         subjectService.deleteSubject(subjectId);
         return ResponseEntity.ok("Subject deleted successfully");
     }
     
-    @PostMapping("/{subjectId}/teachers/{teacherId}")
+    @PostMapping("/v1/subjects/{subjectId}/teachers/{teacherId}")
     public ResponseEntity<String> addEligibleTeacher(@PathVariable String subjectId, @PathVariable String teacherId) {
         subjectService.addEligibleTeacher(subjectId, teacherId);
         return ResponseEntity.ok("Teacher added to subject successfully");
     }
     
-    @DeleteMapping("/{subjectId}/teachers/{teacherId}")
+    @DeleteMapping("/v1/subjects/{subjectId}/teachers/{teacherId}")
     public ResponseEntity<String> removeEligibleTeacher(@PathVariable String subjectId, @PathVariable String teacherId) {
         subjectService.removeEligibleTeacher(subjectId, teacherId);
         return ResponseEntity.ok("Teacher removed from subject successfully");

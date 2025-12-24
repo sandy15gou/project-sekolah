@@ -14,7 +14,8 @@ public class PasswordUtil {
     @Bean
     public CommandLineRunner testPasswordEncoder() {
         return args -> {
-            String rawPassword = "admin123"; // Sesuaikan dengan password yang digunakan
+            String rawPassword = "sandy"; // kalau mau nambah role baru cukup ganti di sini aja pw ny,nanti yang hash ny bakalan muncul kalau di run
+            // ,Sesuaikan dengan password yang digunakan(walaupun username dan passsword beda di kelas ini,tidak ngaruh ke postman)
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
             String encodedPassword = encoder.encode(rawPassword);
             

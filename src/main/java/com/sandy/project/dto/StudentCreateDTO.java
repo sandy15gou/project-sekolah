@@ -1,5 +1,6 @@
 package com.sandy.project.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.sandy.project.validator.annotation.ValidAuthorName;
@@ -10,6 +11,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class StudentCreateDTO implements Serializable {
 
@@ -32,9 +34,5 @@ public class StudentCreateDTO implements Serializable {
     @NotBlank(message = "Alamat tidak boleh kosong")
     private String studentAddress;
     
-    
-
-
-
-
+    private String teacherName;
 }

@@ -7,20 +7,25 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 
 public interface StudentRepository extends JpaRepository<Student, Long> {
-    //method name convention
-    //find+keyword
-    //sql -> select * from Student s where s.id= :studentId
-    public Optional<Student> findById(Long id);
     
-    public List<Student> findBySecureIdIn(List<String> studentIdList);
+    // NOTE: findById(Long id) sudah otomatis ada dari JpaRepository
+    // Digunakan untuk internal system (join table, cascade operations)
     
-    public Optional<Student> findBySecureId(String id);
+    // Custom query methods:
     
-    //where id = :id AND deleted=false
-    public Optional<Student> findByIdAndDeletedFalse(Long id);
+    // Untuk API/External - AMAN diexpose ke public
+    Optional<Student> findBySecureId(String id);
     
+    // Cari students berdasarkan list secureId (untuk bulk operations)
+    List<Student> findBySecureIdIn(List<String> studentIdList);
     
-    //sql -> select s from Student s where s.student_name = :studentName
-    public List<Student> findByNameLike(String studentName);
+    // Cari student by ID dengan pengecekan soft delete manual
+    Optional<Student> findByIdAndDeletedFalse(Long id);
+    
+    // Cari students berdasarkan nama (LIKE query)
+    // Contoh usage: findByNameLike("%John%")
+    List<Student> findByNameLike(String studentName);
 }
+
+
 

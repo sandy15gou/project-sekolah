@@ -5,56 +5,67 @@ import com.sandy.project.dto.ClassRequestDTO;
 import com.sandy.project.service.ClassService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+import java.net.URI;
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/classes")
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @AllArgsConstructor
+@RestController
+@Validated
 public class ClassResource {
+    private static final Logger logger = LoggerFactory.getLogger(ClassResource.class);
     
     private final ClassService classService;
     
-    @PostMapping
-    public ResponseEntity<String> createClass(@RequestBody List<ClassRequestDTO> dtos) {
+    @PostMapping("/v1/classes")
+    public ResponseEntity<Void> createClass(@RequestBody @Valid List<ClassRequestDTO> dtos) {
         classService.createNewClass(dtos);
-        return ResponseEntity.ok("Classes created successfully");
+        return ResponseEntity.created(URI.create("/v1/classes")).build();
     }
     
-    @GetMapping
+    @GetMapping("/v1/classes")
     public ResponseEntity<List<ClassDetailDTO>> getAllClasses() {
         List<ClassDetailDTO> classes = classService.findAllClasses();
         return ResponseEntity.ok(classes);
     }
     
-    @GetMapping("/{classId}")
+    @GetMapping("/v1/classes/{classId}")
     public ResponseEntity<ClassDetailDTO> getClassDetail(@PathVariable String classId) {
         ClassDetailDTO classDetail = classService.findClassDetail(classId);
         return ResponseEntity.ok(classDetail);
     }
     
-    @PutMapping("/{classId}")
-    public ResponseEntity<String> updateClass(@PathVariable String classId, @RequestBody ClassRequestDTO dto) {
+    @PutMapping("/v1/classes/{classId}")
+    public ResponseEntity<Void> updateClass(@PathVariable String classId,
+                                            @RequestBody @Valid ClassRequestDTO dto) {
         classService.updateClass(classId, dto);
-        return ResponseEntity.ok("Class updated successfully");
+        return ResponseEntity.ok().build();
     }
     
-    @DeleteMapping("/{classId}")
-    public ResponseEntity<String> deleteClass(@PathVariable String classId) {
+    @DeleteMapping("/v1/classes/{classId}")
+    public ResponseEntity<Void> deleteClass(@PathVariable String classId) {
         classService.deleteClass(classId);
-        return ResponseEntity.ok("Class deleted successfully");
+        return ResponseEntity.ok().build();
     }
     
-    @PostMapping("/{classId}/students/{studentId}")
-    public ResponseEntity<String> addStudentToClass(@PathVariable String classId, @PathVariable String studentId) {
+    @PostMapping("/v1/classes/{classId}/students/{studentId}")
+    public ResponseEntity<Void> addStudentToClass(@PathVariable String classId,
+                                                  @PathVariable String studentId) {
+        logger.info("Received request to add student {} to class {}", studentId, classId);
         classService.addStudentToClass(classId, studentId);
-        return ResponseEntity.ok("Student added to class successfully");
+        return ResponseEntity.ok().build();
     }
     
-    @DeleteMapping("/{classId}/students/{studentId}")
-    public ResponseEntity<String> removeStudentFromClass(@PathVariable String classId, @PathVariable String studentId) {
+    @DeleteMapping("/v1/classes/{classId}/students/{studentId}")
+    public ResponseEntity<Void> removeStudentFromClass(@PathVariable String classId,
+                                                       @PathVariable String studentId) {
         classService.removeStudentFromClass(classId, studentId);
-        return ResponseEntity.ok("Student removed from class successfully");
+        return ResponseEntity.ok().build();
     }
 }

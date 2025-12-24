@@ -12,29 +12,48 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       maximum-pool-size: 10
-    url: jdbc:postgresql://localhost:5432/project_sekolah?user=sandy&password=015015
-    username: sandy
-    password: 015015
+    # Gunakan environment variables untuk Docker, fallback ke konfigurasi lokal
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/project_sekolah}
+    username: ${SPRING_DATASOURCE_USERNAME:sandy}
+    password: ${SPRING_DATASOURCE_PASSWORD:015015}
+    driver-class-name: org.postgresql.Driver
   jpa:
     database: POSTGRESQL
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           batch_size: 100
         order_inserts: true
-    show-sql: true
+        format_sql: true
+    show-sql: ${SPRING_JPA_SHOW_SQL:true}
+
+# Server configuration
+server:
+  port: ${SERVER_PORT:8090}
+  servlet:
+    context-path: /
+
+# Actuator untuk health check Docker
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
 
 app:
   currency: IDR
   timezone: Asia/Jakarta
   welcome-text: Hello World from Tedy, are you ready. This is from properties?
+
 cloud:
   api-key: ${CLOUD_KEY}
-server:
-  port: 8090
 
 ---
 spring:
@@ -43,11 +62,11 @@ spring:
       on-profile: development
 server:
   port: 8003
-  
+
 app:
   welcome-text: Hello World from Tedy, this is development server
-  
-  
+
+
 ---
 spring:
   config:
@@ -55,12 +74,12 @@ spring:
       on-profile: test
 server:
   port: 8083
-  
+
 ---
 spring:
   config:
     activate:
       on-profile: production
 server:
-  port: 80
+  port: 8080
 
