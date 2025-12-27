@@ -1,23 +1,45 @@
 package com.sandy.project.service;
 
 import com.sandy.project.dto.ScoreCreateDTO;
+import com.sandy.project.dto.ScoreResponseDTO;
 import com.sandy.project.dto.ScoreUpdateDTO;
 
 import java.util.List;
 
 public interface ScoreService {
-   public void createNewScore(List<ScoreCreateDTO> dtos);
-   void updateScore(String scoreId, ScoreUpdateDTO dto);
-   public void deleteScore(String scoreId);
-    ScoreUpdateDTO findScoreDetailById(String scoreId);
-    ScoreUpdateDTO findAllScores(String scoreId);
-    ScoreUpdateDTO findScoresByStudent(String studentId);
     
+    // ========================================
+    // CREATE - Input banyak nilai sekaligus
+    // ========================================
+    void createNewScore(List<ScoreCreateDTO> dtos);
+    
+    // ========================================
+    // UPDATE - Update 1 nilai
+    // ========================================
+    void updateScore(String scoreId, ScoreUpdateDTO dto);
+    
+    // ========================================
+    // DELETE - Hapus 1 nilai (soft delete)
+    // ========================================
+    void deleteScore(String scoreId);
+    
+    // ========================================
+    // READ - Lihat detail 1 nilai
+    // ========================================
+    ScoreResponseDTO findScoreDetailById(String scoreId);
+    
+    // ========================================
+    // READ - Lihat SEMUA nilai
+    // ========================================
+    List<ScoreResponseDTO> findAllScores();
+    
+    // ========================================
+    // READ - Lihat nilai berdasarkan siswa tertentu
+    // ========================================
+    List<ScoreResponseDTO> findScoresByStudent(String studentId);
+    
+    // ========================================
+    // BONUS - Lihat nilai berdasarkan siswa DAN semester
+    // ========================================
+    List<ScoreResponseDTO> findScoresByStudentAndSemester(String studentId, String semester);
 }
-// ✅ createScore(List<ScoreCreateDTO> dtos) → input banyak nilai sekaligus
-//✅ updateScore(String scoreId, ScoreUpdateDTO dto) → update 1 nilai
-//✅ deleteScore(String scoreId) → hapus 1 nilai
-//✅ findScoreDetail(String scoreId) → lihat detail lengkap 1 nilai
-//✅ findScoreById(String scoreId) → lihat ringkas 1 nilai (kalau perlu)
-//✅ findAllScores() → lihat semua nilai
-//✅ findScoresByStudent(String studentId) → lihat nilai berdasarkan siswa
