@@ -3,6 +3,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.sandy.project.domain.Student;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 
@@ -25,7 +27,13 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     // Cari students berdasarkan nama (LIKE query)
     // Contoh usage: findByNameLike("%John%")
     List<Student> findByNameLike(String studentName);
+    
+    // ========== PAGINATION METHODS ==========
+    
+    // Pagination: Get all students dengan soft delete check
+    Page<Student> findByDeletedFalse(Pageable pageable);
+    
+    // Pagination: Search by name dengan LIKE dan soft delete check
+    // Contoh usage: findByNameContainingAndDeletedFalse("John", pageable)
+    Page<Student> findByNameContainingAndDeletedFalse(String name, Pageable pageable);
 }
-
-
-

@@ -3,6 +3,7 @@ package com.sandy.project.web;
 import java.net.URI;
 import java.util.List;
 
+import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.StudentDetailDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sandy.project.dto.StudentCreateDTO;
@@ -52,5 +54,38 @@ public class StudentResource {
     public ResponseEntity<Void> deleteStudent(@PathVariable String id) {
         studentService.deleteStudent(id);
         return ResponseEntity.ok().build();
+    }
+    
+    // ========== PAGINATION ENDPOINTS ==========
+    
+    /**
+     * Get all students dengan pagination dan sorting
+     * Contoh: GET /v1/students/paged?page=0&size=10&sortBy=name&sortDirection=ASC
+     */
+    @GetMapping("/v1/students/paged")
+    public ResponseEntity<PagedResponseDTO<StudentResponseDTO>> getAllStudentsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection
+    ) {
+        PagedResponseDTO<StudentResponseDTO> response = studentService.findAllStudentsPaged(page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Search students by name dengan pagination
+     * Contoh: GET /v1/students/search?name=John&page=0&size=10
+     */
+    @GetMapping("/v1/students/search")
+    public ResponseEntity<PagedResponseDTO<StudentResponseDTO>> searchStudentsByName(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection
+    ) {
+        PagedResponseDTO<StudentResponseDTO> response = studentService.searchStudentsByNamePaged(name, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
     }
 }

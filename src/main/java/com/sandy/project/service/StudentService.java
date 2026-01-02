@@ -1,5 +1,6 @@
 package com.sandy.project.service;
 
+import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.StudentCreateDTO;
 import com.sandy.project.dto.StudentDetailDTO;
 import com.sandy.project.dto.StudentResponseDTO;
@@ -19,6 +20,29 @@ public interface StudentService {
     public void deleteStudent(String studentId);
     
     StudentDetailDTO findStudentDetail(String id);
+    
+    // ========== PAGINATION METHODS ========= =
+    
+    /**
+     * Find all students dengan pagination dan sorting
+     * @param page Page number (0-based)
+     * @param size Items per page (max 50)
+     * @param sortBy Field untuk sorting (hanya: name, createdAt)
+     * @param sortDirection Arah sorting (ASC atau DESC)
+     * @return PagedResponseDTO berisi list students dan metadata pagination
+     */
+    PagedResponseDTO<StudentResponseDTO> findAllStudentsPaged(int page, int size, String sortBy, String sortDirection);
+    
+    /**
+     * Search students by name dengan pagination
+     * @param name Nama yang dicari (partial match)
+     * @param page Page number (0-based)
+     * @param size Items per page (max 50)
+     * @param sortBy Field untuk sorting (hanya: name, createdAt)
+     * @param sortDirection Arah sorting (ASC atau DESC)
+     * @return PagedResponseDTO berisi hasil pencarian
+     */
+    PagedResponseDTO<StudentResponseDTO> searchStudentsByNamePaged(String name, int page, int size, String sortBy, String sortDirection);
     
     //	public List<Author> findAuthors(List<String> authorIdList);
     //
