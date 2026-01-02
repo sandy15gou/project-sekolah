@@ -7,11 +7,6 @@ import java.util.Optional;
 
 public interface TeacherRepository extends JpaRepository<Teacher, Long> {
     
-    // NOTE: findById(Long id) sudah otomatis ada dari JpaRepository
-    // Digunakan untuk internal system (join table, cascade operations)
-    
-    // Custom query methods:
-    
-    // Untuk API/External - AMAN diexpose ke public
+ 
     Optional<Teacher> findBySecureId(String secureId);
 }
