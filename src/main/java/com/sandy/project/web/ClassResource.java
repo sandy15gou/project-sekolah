@@ -2,6 +2,8 @@ package com.sandy.project.web;
 
 import com.sandy.project.dto.ClassDetailDTO;
 import com.sandy.project.dto.ClassRequestDTO;
+import com.sandy.project.dto.ClassResponseDTO;
+import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.service.ClassService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -67,5 +69,50 @@ public class ClassResource {
                                                        @PathVariable String studentId) {
         classService.removeStudentFromClass(classId, studentId);
         return ResponseEntity.ok().build();
+    }
+    
+    // ==================== PAGINATION ENDPOINTS ====================
+    
+    @GetMapping("/v1/classes/paged")
+    public ResponseEntity<PagedResponseDTO<ClassResponseDTO>> getAllClassesPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "className") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+        PagedResponseDTO<ClassResponseDTO> pagedClasses = classService.findAllClassesPaged(page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(pagedClasses);
+    }
+    
+    @GetMapping("/v1/classes/search/by-name")
+    public ResponseEntity<PagedResponseDTO<ClassResponseDTO>> searchClassesByName(
+            @RequestParam String className,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "className") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+        PagedResponseDTO<ClassResponseDTO> pagedClasses = classService.searchClassesByClassNamePaged(className, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(pagedClasses);
+    }
+    
+    @GetMapping("/v1/classes/search/by-academic-year")
+    public ResponseEntity<PagedResponseDTO<ClassResponseDTO>> searchClassesByAcademicYear(
+            @RequestParam String academicYear,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "academicYear") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+        PagedResponseDTO<ClassResponseDTO> pagedClasses = classService.searchClassesByAcademicYearPaged(academicYear, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(pagedClasses);
+    }
+    
+    @GetMapping("/v1/classes/search/by-grade-level")
+    public ResponseEntity<PagedResponseDTO<ClassResponseDTO>> searchClassesByGradeLevel(
+            @RequestParam String gradeLevel,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "gradeLevel") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+        PagedResponseDTO<ClassResponseDTO> pagedClasses = classService.searchClassesByGradeLevelPaged(gradeLevel, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(pagedClasses);
     }
 }
