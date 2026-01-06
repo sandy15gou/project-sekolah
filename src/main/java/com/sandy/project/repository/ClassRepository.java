@@ -21,4 +21,8 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     Page<Class> findByDeletedFalse(Pageable pageable);
     Page<Class> findByClassNameContainingAndDeletedFalse(String name, Pageable pageable);
     
+    Page<Class> findByGradeLevelContainingAndDeletedFalse(String gradeLevel, Pageable pageable);
+    
+    Page<Class> findByAcademicYearContainingAndDeletedFalse(String academicYear, Pageable pageable);
+    
 }

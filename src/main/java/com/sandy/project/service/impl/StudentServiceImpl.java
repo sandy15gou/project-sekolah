@@ -39,7 +39,7 @@ public class StudentServiceImpl implements StudentService {
         }
         
         // Validasi sortBy field (whitelist untuk keamanan)
-        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+       if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
             sortBy = "name"; // Default ke name kalau field tidak valid
         }
         

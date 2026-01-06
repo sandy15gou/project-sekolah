@@ -11,6 +11,7 @@ public class ClassResponseDTO implements Serializable {
     private static final long serialVersionUID = 5168474109080743092L;
     private String secureId;
     private String className;
+    private String gradeLevel;
     private String academicYear;
     private String students;
 }

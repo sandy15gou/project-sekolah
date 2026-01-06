@@ -5,13 +5,7 @@ import com.sandy.project.domain.Student;
 import com.sandy.project.domain.Teacher;
 import com.sandy.project.domain.Schedule;
 import com.sandy.project.domain.Subject;
-import com.sandy.project.dto.ClassDetailDTO;
-import com.sandy.project.dto.ClassRequestDTO;
-import com.sandy.project.dto.StudentDetailDTO;
-import com.sandy.project.dto.TeacherDetailDTO;
-import com.sandy.project.dto.ScheduleDetailDTO;
-import com.sandy.project.dto.SubjectDetailDTO;
-import com.sandy.project.dto.SubjectResponseDTO;
+import com.sandy.project.dto.*;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.ClassRepository;
 import com.sandy.project.repository.StudentRepository;
@@ -20,10 +14,15 @@ import com.sandy.project.repository.ScheduleRepository;
 import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.service.ClassService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +36,11 @@ public class ClassServiceImpl implements ClassService {
     private final StudentRepository studentRepository;
     private final ScheduleRepository scheduleRepository;
     private final SubjectRepository subjectRepository;
+    
+    private static final List<String> ALLOWED_SORT_FIELDS =
+            Arrays.asList("className", "gradeLevel", "academicYear", "createdAt");
+    
+    private static final int MAX_PAGE_SIZE = 50;
     
     
     @Override
@@ -310,5 +314,131 @@ public class ClassServiceImpl implements ClassService {
                 classRepository.save(kelas);
             }
         }
+    }
+    
+    @Override
+    public PagedResponseDTO<ClassResponseDTO> findAllClassesPaged(int page, int size, String sortBy, String sortDirection) {
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "createdAt"; // Default ke createdAt kalau field tidak valid
+        }
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        // Buat Pageable object
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Page<Class> classPage = classRepository.findByDeletedFalse(pageable);
+        Page<ClassResponseDTO> dtoPage = classPage.map(kelas ->{
+            ClassResponseDTO dto = new ClassResponseDTO();
+            dto.setSecureId(kelas.getSecureId());
+            dto.setClassName(kelas.getClassName());
+            dto.setGradeLevel(kelas.getGradeLevel());
+            dto.setAcademicYear(kelas.getAcademicYear());
+            return dto;
+        });
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ClassResponseDTO> searchClassesByClassNamePaged(String className, int page, int size, String sortBy, String sortDirection) {
+        // Validasi size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "className";
+        }
+        
+        // Validasi direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        // Buat Pageable
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // Query search by className
+        Page<Class> classPage = classRepository.findByClassNameContainingAndDeletedFalse(className, pageable);
+        
+        // Convert ke DTO
+        Page<ClassResponseDTO> dtoPage = classPage.map(kelas -> {
+            ClassResponseDTO dto = new ClassResponseDTO();
+            dto.setSecureId(kelas.getSecureId());
+            dto.setClassName(kelas.getClassName());
+            dto.setGradeLevel(kelas.getGradeLevel());
+            dto.setAcademicYear(kelas.getAcademicYear());
+            return dto;
+        });
+        
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ClassResponseDTO> searchClassesByAcademicYearPaged(String academicYear, int page, int size, String sortBy, String sortDirection) {
+        // Validasi size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "academicYear";
+        }
+        
+        // Validasi direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        // Buat Pageable
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // Query search by academicYear
+        Page<Class> classPage = classRepository.findByAcademicYearContainingAndDeletedFalse(academicYear, pageable);
+        
+        // Convert ke DTO
+        Page<ClassResponseDTO> dtoPage = classPage.map(kelas -> {
+            ClassResponseDTO dto = new ClassResponseDTO();
+            dto.setSecureId(kelas.getSecureId());
+            dto.setClassName(kelas.getClassName());
+            dto.setGradeLevel(kelas.getGradeLevel());
+            dto.setAcademicYear(kelas.getAcademicYear());
+            return dto;
+        });
+        
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ClassResponseDTO> searchClassesByGradeLevelPaged(String gradeLevel, int page, int size, String sortBy, String sortDirection) {
+        // Validasi size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "gradeLevel";
+        }
+        
+        // Validasi direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        // Buat Pageable
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // Query search by gradeLevel
+        Page<Class> classPage = classRepository.findByGradeLevelContainingAndDeletedFalse(gradeLevel, pageable);
+        
+        // Convert ke DTO
+        Page<ClassResponseDTO> dtoPage = classPage.map(kelas -> {
+            ClassResponseDTO dto = new ClassResponseDTO();
+            dto.setSecureId(kelas.getSecureId());
+            dto.setClassName(kelas.getClassName());
+            dto.setGradeLevel(kelas.getGradeLevel());
+            dto.setAcademicYear(kelas.getAcademicYear());
+            return dto;
+        });
+        
+        return new PagedResponseDTO<>(dtoPage);
     }
 }
