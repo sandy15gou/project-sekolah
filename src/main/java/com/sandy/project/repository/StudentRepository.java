@@ -6,9 +6,10 @@ import com.sandy.project.domain.Student;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 
-public interface StudentRepository extends JpaRepository<Student, Long> {
+public interface StudentRepository extends JpaRepository<Student, Long>, JpaSpecificationExecutor<Student> {
     
     // NOTE: findById(Long id) sudah otomatis ada dari JpaRepository
     // Digunakan untuk internal system (join table, cascade operations)

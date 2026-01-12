@@ -12,9 +12,14 @@ import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.repository.TeacherRepository;
 import com.sandy.project.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +31,10 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ClassRepository classRepository;
     private final SubjectRepository subjectRepository;
     private final TeacherRepository teacherRepository;
+    
+    // Whitelist field yang boleh di-sort (security measure)
+    private static final List<String> ALLOWED_SORT_FIELDS = Arrays.asList("day", "startTime", "semester", "createdAt");
+    private static final int MAX_PAGE_SIZE = 50;
 
     @Override
     public ScheduleDetailDTO findScheduleDetail(String scheduleId) {
@@ -97,6 +106,109 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = scheduleRepository.findBySecureId(scheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found"));
         scheduleRepository.delete(schedule);
+    }
+    
+    // ========== PAGINATION METHODS ==========
+    
+    @Override
+    public PagedResponseDTO<ScheduleResponseDTO> findAllSchedulesPaged(int page, int size, String sortBy, String sortDirection) {
+        // Validasi dan buat Pageable
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        
+        // Query ke database
+        Page<Schedule> schedulePage = scheduleRepository.findByDeletedFalse(pageable);
+        
+        // Convert ke DTO
+        Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
+        
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByDayPaged(String day, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Schedule> schedulePage = scheduleRepository.findByDayContainingIgnoreCaseAndDeletedFalse(day, pageable);
+        Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesBySemesterPaged(String semester, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Schedule> schedulePage = scheduleRepository.findBySemesterContainingIgnoreCaseAndDeletedFalse(semester, pageable);
+        Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByClassPaged(String classSecureId, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Schedule> schedulePage = scheduleRepository.findByClazz_SecureIdAndDeletedFalse(classSecureId, pageable);
+        Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesBySubjectPaged(String subjectSecureId, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Schedule> schedulePage = scheduleRepository.findBySubject_SecureIdAndDeletedFalse(subjectSecureId, pageable);
+        Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByTeacherPaged(String teacherSecureId, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Schedule> schedulePage = scheduleRepository.findByTeacher_SecureIdAndDeletedFalse(teacherSecureId, pageable);
+        Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByDayAndSemesterPaged(String day, String semester, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Schedule> schedulePage = scheduleRepository.findByDayContainingIgnoreCaseAndSemesterContainingIgnoreCaseAndDeletedFalse(
+                day, semester, pageable);
+        Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    // ========== HELPER METHODS ==========
+    
+    private Pageable createPageable(int page, int size, String sortBy, String sortDirection) {
+        // Validasi size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "day"; // Default ke day
+        }
+        
+        // Validasi direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        return PageRequest.of(page, size, Sort.by(direction, sortBy));
+    }
+    
+    private ScheduleResponseDTO mapToResponseDTO(Schedule schedule) {
+        ScheduleResponseDTO dto = new ScheduleResponseDTO();
+        dto.setSecureId(schedule.getSecureId());
+        dto.setDay(schedule.getDay());
+        dto.setTime(schedule.getStartTime() + " - " + schedule.getEndTime());
+        
+        if (schedule.getClazz() != null) {
+            dto.setClassName(schedule.getClazz().getClassName());
+        }
+        if (schedule.getSubject() != null) {
+            dto.setSubjectName(schedule.getSubject().getName());
+        }
+        if (schedule.getTeacher() != null) {
+            dto.setTeacherName(schedule.getTeacher().getName());
+        }
+        
+        return dto;
     }
 
     private ScheduleDetailDTO mapToDetailDTO(Schedule schedule) {

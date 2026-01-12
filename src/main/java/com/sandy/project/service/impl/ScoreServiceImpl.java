@@ -3,6 +3,7 @@ package com.sandy.project.service.impl;
 import com.sandy.project.domain.Score;
 import com.sandy.project.domain.Student;
 import com.sandy.project.domain.Subject;
+import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.ScoreCreateDTO;
 import com.sandy.project.dto.ScoreResponseDTO;
 import com.sandy.project.dto.ScoreUpdateDTO;
@@ -12,9 +13,14 @@ import com.sandy.project.repository.StudentRepository;
 import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.service.ScoreService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -25,6 +31,10 @@ public class ScoreServiceImpl implements ScoreService {
     private final ScoreRepository scoreRepository;
     private final StudentRepository studentRepository;
     private final SubjectRepository subjectRepository;
+    
+    // Whitelist field yang boleh di-sort (security measure)
+    private static final List<String> ALLOWED_SORT_FIELDS = Arrays.asList("score", "semester", "createdAt");
+    private static final int MAX_PAGE_SIZE = 50;
     
     // ========================================
     // CREATE - Input banyak nilai sekaligus
@@ -160,5 +170,80 @@ public class ScoreServiceImpl implements ScoreService {
                 .grade(score.getGrade())  // Business logic dari entity
                 .isPassing(score.isPassing())  // Business logic dari entity
                 .build();
+    }
+    
+    // ========== PAGINATION METHODS ==========
+    
+    @Override
+    public PagedResponseDTO<ScoreResponseDTO> findAllScoresPaged(int page, int size, String sortBy, String sortDirection) {
+        // Validasi dan buat Pageable
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        
+        // Query ke database
+        Page<Score> scorePage = scoreRepository.findByDeletedFalse(pageable);
+        
+        // Convert ke DTO
+        Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
+        
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScoreResponseDTO> searchScoresByStudentPaged(String studentSecureId, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Score> scorePage = scoreRepository.findByStudent_SecureIdAndDeletedFalse(studentSecureId, pageable);
+        Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScoreResponseDTO> searchScoresBySubjectPaged(String subjectSecureId, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Score> scorePage = scoreRepository.findBySubject_SecureIdAndDeletedFalse(subjectSecureId, pageable);
+        Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScoreResponseDTO> searchScoresBySemesterPaged(String semester, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Score> scorePage = scoreRepository.findBySemesterAndDeletedFalse(semester, pageable);
+        Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScoreResponseDTO> searchScoresByStudentAndSemesterPaged(String studentSecureId, String semester, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Score> scorePage = scoreRepository.findByStudent_SecureIdAndSemesterAndDeletedFalse(studentSecureId, semester, pageable);
+        Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<ScoreResponseDTO> searchScoresBySubjectAndSemesterPaged(String subjectSecureId, String semester, int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Score> scorePage = scoreRepository.findBySubject_SecureIdAndSemesterAndDeletedFalse(subjectSecureId, semester, pageable);
+        Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    // ========== HELPER METHODS ==========
+    
+    private Pageable createPageable(int page, int size, String sortBy, String sortDirection) {
+        // Validasi size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "score"; // Default ke score
+        }
+        
+        // Validasi direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        return PageRequest.of(page, size, Sort.by(direction, sortBy));
     }
 }

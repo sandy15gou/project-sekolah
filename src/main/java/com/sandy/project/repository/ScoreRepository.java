@@ -2,6 +2,8 @@ package com.sandy.project.repository;
 
 import com.sandy.project.domain.Score;
 import com.sandy.project.domain.Student;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -41,4 +43,24 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
     
     // NOTE: Method save(), saveAll(), delete(), findAll()
     // sudah otomatis ada dari JpaRepository!
+    
+    // ========== PAGINATION METHODS ==========
+    
+    // General: Get all scores dengan soft delete check
+    Page<Score> findByDeletedFalse(Pageable pageable);
+    
+    // Filter by Student (using student secureId)
+    Page<Score> findByStudent_SecureIdAndDeletedFalse(String studentSecureId, Pageable pageable);
+    
+    // Filter by Subject (using subject secureId)
+    Page<Score> findBySubject_SecureIdAndDeletedFalse(String subjectSecureId, Pageable pageable);
+    
+    // Filter by Semester
+    Page<Score> findBySemesterAndDeletedFalse(String semester, Pageable pageable);
+    
+    // Filter by Student AND Semester (combined filter)
+    Page<Score> findByStudent_SecureIdAndSemesterAndDeletedFalse(String studentSecureId, String semester, Pageable pageable);
+    
+    // Filter by Subject AND Semester (combined filter)
+    Page<Score> findBySubject_SecureIdAndSemesterAndDeletedFalse(String subjectSecureId, String semester, Pageable pageable);
 }

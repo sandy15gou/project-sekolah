@@ -1,16 +1,25 @@
 package com.sandy.project.service.impl;
 
 import com.sandy.project.domain.Teacher;
+import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.TeacherCreateDTO;
 import com.sandy.project.dto.TeacherDetailDTO;
+import com.sandy.project.dto.TeacherFilterDTO;
 import com.sandy.project.dto.TeacherResponseDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.TeacherRepository;
 import com.sandy.project.service.TeacherService;
+import com.sandy.project.specification.TeacherSpecification;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -18,6 +27,10 @@ import java.util.List;
 public class TeacherServiceImpl implements TeacherService {
     
     private final TeacherRepository teacherRepository;
+    
+    // Whitelist field yang boleh di-sort (security measure)
+    private static final List<String> ALLOWED_SORT_FIELDS = Arrays.asList("name", "createdAt", "birthDate", "gender");
+    private static final int MAX_PAGE_SIZE = 50;
     
     @Override
     public void createNewTeacher(List<TeacherCreateDTO> dtos) {
@@ -80,5 +93,107 @@ public class TeacherServiceImpl implements TeacherService {
         dto.setBirthDate(teacher.getBirthDate().toEpochDay());
         return dto;
         
+    }
+    
+    // ========== PAGINATION METHODS ==========
+    
+    @Override
+    public PagedResponseDTO<TeacherResponseDTO> findAllTeachersPaged(int page, int size, String sortBy, String sortDirection) {
+        // Validasi size tidak melebihi max
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy field (whitelist untuk keamanan)
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "name"; // Default ke name kalau field tidak valid
+        }
+        
+        // Validasi sort direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        // Buat Pageable object
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // Query ke database
+        Page<Teacher> teacherPage = teacherRepository.findByDeletedFalse(pageable);
+        
+        // Convert Teacher entity ke TeacherResponseDTO
+        Page<TeacherResponseDTO> dtoPage = teacherPage.map(teacher -> {
+            TeacherResponseDTO dto = new TeacherResponseDTO();
+            dto.setTeacherName(teacher.getName());
+            dto.setBirthDate(teacher.getBirthDate().toEpochDay());
+            return dto;
+        });
+        
+        // Wrap ke PagedResponseDTO
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<TeacherResponseDTO> searchTeachersByNamePaged(String name, int page, int size, String sortBy, String sortDirection) {
+        // Validasi size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "name";
+        }
+        
+        // Validasi direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        // Buat Pageable
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // Query search by name
+        Page<Teacher> teacherPage = teacherRepository.findByNameContainingAndDeletedFalse(name, pageable);
+        
+        // Convert ke DTO
+        Page<TeacherResponseDTO> dtoPage = teacherPage.map(teacher -> {
+            TeacherResponseDTO dto = new TeacherResponseDTO();
+            dto.setTeacherName(teacher.getName());
+            dto.setBirthDate(teacher.getBirthDate().toEpochDay());
+            return dto;
+        });
+        
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<TeacherResponseDTO> filterTeachers(TeacherFilterDTO filter, int page, int size, String sortBy, String sortDirection) {
+        // Validasi size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "name";
+        }
+        
+        // Validasi direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        // Buat Pageable
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // Build Specification dari filter DTO
+        Specification<Teacher> spec = TeacherSpecification.filterBy(filter);
+        
+        // Query dengan dynamic filter menggunakan Specification
+        Page<Teacher> teacherPage = teacherRepository.findAll(spec, pageable);
+        
+        // Convert ke DTO
+        Page<TeacherResponseDTO> dtoPage = teacherPage.map(teacher -> {
+            TeacherResponseDTO dto = new TeacherResponseDTO();
+            dto.setTeacherName(teacher.getName());
+            dto.setBirthDate(teacher.getBirthDate().toEpochDay());
+            return dto;
+        });
+        
+        return new PagedResponseDTO<>(dtoPage);
     }
 }

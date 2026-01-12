@@ -5,16 +5,19 @@ import com.sandy.project.domain.Student;
 import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.StudentCreateDTO;
 import com.sandy.project.dto.StudentDetailDTO;
+import com.sandy.project.dto.StudentFilterDTO;
 import com.sandy.project.dto.StudentResponseDTO;
 import com.sandy.project.dto.StudentUpdateDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.StudentRepository;
+import com.sandy.project.specification.StudentSpecification;
 import com.sandy.project.service.StudentService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -28,7 +31,7 @@ public class StudentServiceImpl implements StudentService {
     private final StudentRepository studentRepository;
     
     // Whitelist field yang boleh di-sort (security measure)
-    private static final List<String> ALLOWED_SORT_FIELDS = Arrays.asList("name", "createdAt");
+    private static final List<String> ALLOWED_SORT_FIELDS = Arrays.asList("name", "createdAt", "birthDate", "gender");
     private static final int MAX_PAGE_SIZE = 50;
     
     @Override
@@ -84,6 +87,41 @@ public class StudentServiceImpl implements StudentService {
         
         // Query search by name
         Page<Student> studentPage = studentRepository.findByNameContainingAndDeletedFalse(name, pageable);
+        
+        // Convert ke DTO
+        Page<StudentResponseDTO> dtoPage = studentPage.map(student -> {
+            StudentResponseDTO dto = new StudentResponseDTO();
+            dto.setStudentName(student.getName());
+            dto.setBirthDate(student.getBirthDate().toEpochDay());
+            return dto;
+        });
+        
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    @Override
+    public PagedResponseDTO<StudentResponseDTO> filterStudents(StudentFilterDTO filter, int page, int size, String sortBy, String sortDirection) {
+        // Validasi size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // Validasi sortBy
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "name";
+        }
+        
+        // Validasi direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        // Buat Pageable
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // Build Specification dari filter DTO
+        Specification<Student> spec = StudentSpecification.filterBy(filter);
+        
+        // Query dengan dynamic filter menggunakan Specification
+        Page<Student> studentPage = studentRepository.findAll(spec, pageable);
         
         // Convert ke DTO
         Page<StudentResponseDTO> dtoPage = studentPage.map(student -> {

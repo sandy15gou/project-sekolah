@@ -3,6 +3,7 @@ package com.sandy.project.service;
 import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.StudentCreateDTO;
 import com.sandy.project.dto.StudentDetailDTO;
+import com.sandy.project.dto.StudentFilterDTO;
 import com.sandy.project.dto.StudentResponseDTO;
 import com.sandy.project.dto.StudentUpdateDTO;
 
@@ -43,6 +44,19 @@ public interface StudentService {
      * @return PagedResponseDTO berisi hasil pencarian
      */
     PagedResponseDTO<StudentResponseDTO> searchStudentsByNamePaged(String name, int page, int size, String sortBy, String sortDirection);
+    
+    /**
+     * Filter students dengan multiple criteria (dynamic query)
+     * Semua criteria di filter akan di-combine dengan AND logic
+     *
+     * @param filter StudentFilterDTO berisi kriteria filter (nama, gender, alamat, tanggal lahir, umur)
+     * @param page Page number (0-based)
+     * @param size Items per page (max 50)
+     * @param sortBy Field untuk sorting (hanya: name, createdAt, birthDate)
+     * @param sortDirection Arah sorting (ASC atau DESC)
+     * @return PagedResponseDTO berisi hasil filter
+     */
+    PagedResponseDTO<StudentResponseDTO> filterStudents(StudentFilterDTO filter, int page, int size, String sortBy, String sortDirection);
     
     //	public List<Author> findAuthors(List<String> authorIdList);
     //
