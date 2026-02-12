@@ -2,6 +2,7 @@ package com.sandy.project.service;
 
 import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.ScoreCreateDTO;
+import com.sandy.project.dto.ScoreFilterDTO;
 import com.sandy.project.dto.ScoreResponseDTO;
 import com.sandy.project.dto.ScoreUpdateDTO;
 
@@ -112,4 +113,19 @@ public interface ScoreService {
      * @return PagedResponseDTO berisi hasil pencarian
      */
     PagedResponseDTO<ScoreResponseDTO> searchScoresBySubjectAndSemesterPaged(String subjectSecureId, String semester, int page, int size, String sortBy, String sortDirection);
+    
+    /**
+     * Filter scores dengan multiple criteria (dynamic query)
+     * Semua criteria di filter akan di-combine dengan AND logic
+     *
+     * @param filter ScoreFilterDTO berisi kriteria filter (minScore, maxScore, semester, studentId, subjectId, grade, isPassing)
+     * @param page Page number (0-based)
+     * @param size Items per page (max 50)
+     * @param sortBy Field untuk sorting (score, semester, createdAt)
+     * @param sortDirection Arah sorting (ASC atau DESC)
+     * @return PagedResponseDTO berisi hasil filter
+     *
+     * Tujuan: Menyediakan method untuk filter Score dengan kombinasi kriteria
+     */
+    PagedResponseDTO<ScoreResponseDTO> filterScores(ScoreFilterDTO filter, int page, int size, String sortBy, String sortDirection);
 }

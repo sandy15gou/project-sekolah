@@ -11,11 +11,13 @@ import com.sandy.project.repository.ClassRepository;
 import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.repository.TeacherRepository;
 import com.sandy.project.service.ScheduleService;
+import com.sandy.project.specification.ScheduleSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -243,5 +245,68 @@ public class ScheduleServiceImpl implements ScheduleService {
             dto.setTeacher(teacherDto);
         }
         return dto;
+    }
+    
+    /**
+     * Filter schedules dengan multiple criteria menggunakan Specification
+     
+     * Flow:
+     * 1. Validasi input (size, sortBy, sortDirection)
+     * 2. Build Pageable object
+     * 3. Build Specification dari ScheduleFilterDTO
+     * 4. Execute query dengan findAll(spec, pageable)
+     * 5. Convert hasil ke DTO
+     * 6. Return PagedResponseDTO
+     */
+    @Override
+    public PagedResponseDTO<ScheduleResponseDTO> filterSchedules(ScheduleFilterDTO filter, int page, int size, String sortBy, String sortDirection) {
+        // STEP 1: Validasi size tidak melebihi max
+        // Tujuan: Mencegah user request data terlalu banyak sekaligus
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // STEP 2: Validasi sortBy field (whitelist untuk keamanan)
+        // Tujuan: Mencegah SQL injection & error jika field tidak valid
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "day"; // Default ke day kalau field tidak valid
+        }
+        
+        // STEP 3: Validasi sort direction
+        // Tujuan: Pastikan hanya ASC atau DESC
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC")
+            ? Sort.Direction.DESC   // Descending
+            : Sort.Direction.ASC;   // Ascending
+        
+        // STEP 4: Buat Pageable object
+        // Breakdown:
+        // - page: halaman ke berapa (0-based, 0 = halaman pertama)
+        // - size: berapa data per halaman
+        // - Sort.by(direction, sortBy): urutkan berdasarkan field & arah
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // STEP 5: Build Specification dari filter DTO
+        // Tujuan: Buat instruksi query dinamis berdasarkan field yang diisi
+        // ScheduleSpecification.filterBy() akan:
+        // - Cek field mana yang tidak null
+        // - Build kondisi WHERE untuk setiap field
+        // - Gabungkan dengan AND logic
+        Specification<Schedule> spec = ScheduleSpecification.filterBy(filter);
+        
+        // STEP 6: Query ke database dengan specification & pagination
+        // Method findAll(spec, pageable) OTOMATIS ada dari JpaSpecificationExecutor
+        // Return: Page<Schedule> berisi data + metadata (totalElements, totalPages, dll)
+        Page<Schedule> schedulePage = scheduleRepository.findAll(spec, pageable);
+        
+        // STEP 7: Convert Schedule entity ke ScheduleResponseDTO
+        // Tujuan: Hanya kirim data yang perlu (security), hide field internal
+        // mapToResponseDTO() adalah helper method yang sudah ada
+        Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
+        
+        // STEP 8: Wrap ke PagedResponseDTO dan return
+        // PagedResponseDTO berisi:
+        // - content: List<ScheduleResponseDTO>
+        // - page, size, totalElements, totalPages, last, first, dll
+        return new PagedResponseDTO<>(dtoPage);
     }
 }

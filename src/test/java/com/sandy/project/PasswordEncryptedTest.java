@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("default")
+@ActiveProfiles("test")
 @Slf4j
 public class PasswordEncryptedTest {
     

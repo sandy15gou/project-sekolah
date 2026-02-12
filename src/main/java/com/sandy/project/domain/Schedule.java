@@ -36,7 +36,7 @@ public class Schedule extends AbstractBaseEntity {
     @JoinColumn(name = "teacher_id", referencedColumnName = "id")
     private Teacher teacher;
 
-    @Column(name = "day", nullable = false)
+    @Column(name = "schedule_day", nullable = false)
     private String day;
 
     @Column(name = "start_time", nullable = false)

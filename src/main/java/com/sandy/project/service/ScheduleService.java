@@ -2,6 +2,7 @@ package com.sandy.project.service;
 
 import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.ScheduleDetailDTO;
+import com.sandy.project.dto.ScheduleFilterDTO;
 import com.sandy.project.dto.ScheduleResponseDTO;
 
 import java.util.List;
@@ -91,5 +92,19 @@ public interface ScheduleService {
      * @return PagedResponseDTO berisi hasil pencarian
      */
     PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByDayAndSemesterPaged(String day, String semester, int page, int size, String sortBy, String sortDirection);
+    
+    /**
+     * Filter schedules dengan multiple criteria (dynamic query)
+     * Semua criteria di filter akan di-combine dengan AND logic
+     *
+     * @param filter ScheduleFilterDTO berisi kriteria filter (day, startTime, endTime, semester, classId, subjectId, teacherId)
+     * @param page Page number (0-based)
+     * @param size Items per page (max 50)
+     * @param sortBy Field untuk sorting (day, startTime, endTime, semester, createdAt)
+     * @param sortDirection Arah sorting (ASC atau DESC)
+     * @return PagedResponseDTO berisi hasil filter
+     *
+     * Tujuan: Menyediakan method untuk filter Schedule dengan kombinasi kriteria
+     */
+    PagedResponseDTO<ScheduleResponseDTO> filterSchedules(ScheduleFilterDTO filter, int page, int size, String sortBy, String sortDirection);
 }
-

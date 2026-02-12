@@ -5,6 +5,7 @@ import com.sandy.project.domain.Student;
 import com.sandy.project.domain.Subject;
 import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.ScoreCreateDTO;
+import com.sandy.project.dto.ScoreFilterDTO;
 import com.sandy.project.dto.ScoreResponseDTO;
 import com.sandy.project.dto.ScoreUpdateDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
@@ -12,11 +13,13 @@ import com.sandy.project.repository.ScoreRepository;
 import com.sandy.project.repository.StudentRepository;
 import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.service.ScoreService;
+import com.sandy.project.specification.ScoreSpecification;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -245,5 +248,70 @@ public class ScoreServiceImpl implements ScoreService {
         Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
         
         return PageRequest.of(page, size, Sort.by(direction, sortBy));
+    }
+
+    /**
+     * Filter scores dengan multiple criteria menggunakan Specification
+     *
+     * Flow:
+     * 1. Validasi input (size, sortBy, sortDirection)
+     * 2. Build Pageable object
+     * 3. Build Specification dari ScoreFilterDTO
+     * 4. Execute query dengan findAll(spec, pageable)
+     * 5. Convert hasil ke DTO
+     * 6. Return PagedResponseDTO
+     */
+    @Override
+    public PagedResponseDTO<ScoreResponseDTO> filterScores(ScoreFilterDTO filter, int page, int size, String sortBy, String sortDirection) {
+        // STEP 1: Validasi size tidak melebihi max
+        // Tujuan: Mencegah user request data terlalu banyak sekaligus
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // STEP 2: Validasi sortBy field (whitelist untuk keamanan)
+        // Tujuan: Mencegah SQL injection & error jika field tidak valid
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "score"; // Default ke score kalau field tidak valid
+        }
+        
+        // STEP 3: Validasi sort direction
+        // Tujuan: Pastikan hanya ASC atau DESC
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC")
+            ? Sort.Direction.DESC   // Descending (100 → 0)
+            : Sort.Direction.ASC;   // Ascending (0 → 100)
+        
+        // STEP 4: Buat Pageable object
+        // Breakdown:
+        // - page: halaman ke berapa (0-based, 0 = halaman pertama)
+        // - size: berapa data per halaman
+        // - Sort.by(direction, sortBy): urutkan berdasarkan field & arah
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // STEP 5: Build Specification dari filter DTO
+        // Tujuan: Buat instruksi query dinamis berdasarkan field yang diisi
+        // ScoreSpecification.filterBy() akan:
+        // - Cek field mana yang tidak null
+        // - Build kondisi WHERE untuk setiap field
+        // - Gabungkan dengan AND logic
+        // - Support filter berdasarkan grade (A, B, C, D, E)
+        // - Support filter berdasarkan isPassing (lulus/tidak)
+        Specification<Score> spec = ScoreSpecification.filterBy(filter);
+        
+        // STEP 6: Query ke database dengan specification & pagination
+        // Method findAll(spec, pageable) OTOMATIS ada dari JpaSpecificationExecutor
+        // Return: Page<Score> berisi data + metadata (totalElements, totalPages, dll)
+        Page<Score> scorePage = scoreRepository.findAll(spec, pageable);
+        
+        // STEP 7: Convert Score entity ke ScoreResponseDTO
+        // Tujuan: Hanya kirim data yang perlu (security), hide field internal
+        // convertToResponseDTO() adalah helper method yang sudah ada
+        Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
+        
+        // STEP 8: Wrap ke PagedResponseDTO dan return
+        // PagedResponseDTO berisi:
+        // - content: List<ScoreResponseDTO>
+        // - page, size, totalElements, totalPages, last, first, dll
+        return new PagedResponseDTO<>(dtoPage);
     }
 }

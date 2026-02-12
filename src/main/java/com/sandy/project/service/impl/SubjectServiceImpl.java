@@ -2,17 +2,27 @@ package com.sandy.project.service.impl;
 
 import com.sandy.project.domain.Subject;
 import com.sandy.project.domain.Teacher;
+import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.SubjectDetailDTO;
+import com.sandy.project.dto.SubjectFilterDTO;
+import com.sandy.project.dto.SubjectResponseDTO;
 import com.sandy.project.dto.TeacherDetailDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.repository.TeacherRepository;
 import com.sandy.project.service.SubjectService;
+import com.sandy.project.specification.SubjectSpecification;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +33,10 @@ public class SubjectServiceImpl implements SubjectService {
     
     private final SubjectRepository subjectRepository;
     private final TeacherRepository teacherRepository;
+    
+    // Whitelist field yang boleh di-sort (security measure)
+    private static final List<String> ALLOWED_SORT_FIELDS = Arrays.asList("name", "createdAt");
+    private static final int MAX_PAGE_SIZE = 50;
     
     @Override
     public SubjectDetailDTO findSubjectDetail(String subjectId) {
@@ -128,5 +142,72 @@ public class SubjectServiceImpl implements SubjectService {
         }
         
         return dto;
+    }
+    
+    /**
+     * Filter subjects dengan multiple criteria menggunakan Specification
+     *
+     * Flow:
+     * 1. Validasi input (size, sortBy, sortDirection)
+     * 2. Build Pageable object
+     * 3. Build Specification dari SubjectFilterDTO
+     * 4. Execute query dengan findAll(spec, pageable)
+     * 5. Convert hasil ke DTO
+     * 6. Return PagedResponseDTO
+     */
+    @Override
+    public PagedResponseDTO<SubjectResponseDTO> filterSubjects(SubjectFilterDTO filter, int page, int size, String sortBy, String sortDirection) {
+        // STEP 1: Validasi size tidak melebihi max
+        // Tujuan: Mencegah user request data terlalu banyak sekaligus
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // STEP 2: Validasi sortBy field (whitelist untuk keamanan)
+        // Tujuan: Mencegah SQL injection & error jika field tidak valid
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "name"; // Default ke name kalau field tidak valid
+        }
+        
+        // STEP 3: Validasi sort direction
+        // Tujuan: Pastikan hanya ASC atau DESC
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC")
+            ? Sort.Direction.DESC   // Descending (Z → A)
+            : Sort.Direction.ASC;   // Ascending (A → Z)
+        
+        // STEP 4: Buat Pageable object
+        // Breakdown:
+        // - page: halaman ke berapa (0-based, 0 = halaman pertama)
+        // - size: berapa data per halaman
+        // - Sort.by(direction, sortBy): urutkan berdasarkan field & arah
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // STEP 5: Build Specification dari filter DTO
+        // Tujuan: Buat instruksi query dinamis berdasarkan field yang diisi
+        // SubjectSpecification.filterBy() akan:
+        // - Cek field mana yang tidak null
+        // - Build kondisi WHERE untuk setiap field
+        // - Gabungkan dengan AND logic
+        Specification<Subject> spec = SubjectSpecification.filterBy(filter);
+        
+        // STEP 6: Query ke database dengan specification & pagination
+        // Method findAll(spec, pageable) OTOMATIS ada dari JpaSpecificationExecutor
+        // Return: Page<Subject> berisi data + metadata (totalElements, totalPages, dll)
+        Page<Subject> subjectPage = subjectRepository.findAll(spec, pageable);
+        
+        // STEP 7: Convert Subject entity ke SubjectResponseDTO
+        // Tujuan: Hanya kirim data yang perlu (security), hide field internal
+        Page<SubjectResponseDTO> dtoPage = subjectPage.map(subject -> {
+            SubjectResponseDTO dto = new SubjectResponseDTO();
+            dto.setSecureId(subject.getSecureId());
+            dto.setName(subject.getName());
+            return dto;
+        });
+        
+        // STEP 8: Wrap ke PagedResponseDTO dan return
+        // PagedResponseDTO berisi:
+        // - content: List<SubjectResponseDTO>
+        // - page, size, totalElements, totalPages, last, first, dll
+        return new PagedResponseDTO<>(dtoPage);
     }
 }

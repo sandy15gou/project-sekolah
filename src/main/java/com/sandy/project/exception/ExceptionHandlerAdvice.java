@@ -17,6 +17,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import com.sandy.project.dto.ErrorResponseDTO;
 import com.sandy.project.enums.ErrorCode;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+
 @ControllerAdvice
 public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
 	
@@ -27,6 +30,16 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
 		ErrorResponseDTO errorResponse =  ErrorResponseDTO.of("data not found", details, ErrorCode.DATA_NOT_FOUND, HttpStatus.BAD_REQUEST);
 		return ResponseEntity.badRequest().body(errorResponse);
 
+	}
+	
+	@ExceptionHandler(ConstraintViolationException.class)
+	protected ResponseEntity<ErrorResponseDTO> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request){
+		List<String> details = new ArrayList<String>();
+		for(ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+			details.add(violation.getMessage());
+		}
+		ErrorResponseDTO errorResponse = ErrorResponseDTO.of("invalid data", details, ErrorCode.INVALID_DATA, HttpStatus.BAD_REQUEST);
+		return ResponseEntity.badRequest().body(errorResponse);
 	}
 
 	@Override

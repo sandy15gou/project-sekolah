@@ -2,6 +2,7 @@ package com.sandy.project.web;
 
 import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.ScoreCreateDTO;
+import com.sandy.project.dto.ScoreFilterDTO;
 import com.sandy.project.dto.ScoreResponseDTO;
 import com.sandy.project.dto.ScoreUpdateDTO;
 import com.sandy.project.service.ScoreService;
@@ -172,6 +173,89 @@ public class ScoreResource {
             @RequestParam(defaultValue = "DESC") String sortDirection
     ) {
         PagedResponseDTO<ScoreResponseDTO> response = scoreService.searchScoresBySubjectAndSemesterPaged(subjectId, semester, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Filter scores dengan multiple criteria (advanced filtering)
+     * Support filtering by: minScore, maxScore, semester, studentId, subjectId, grade, isPassing
+     * Semua parameter bersifat optional dan akan di-combine dengan AND logic
+     *
+     * Contoh penggunaan:
+     * 1. Filter by passing grade (>= 75):
+     *    GET /v1/scores/filter?isPassing=true&page=0&size=10
+     *
+     * 2. Filter by score range:
+     *    GET /v1/scores/filter?minScore=80&maxScore=100&page=0&size=10
+     *
+     * 3. Filter by grade (A, B, C, D, E):
+     *    GET /v1/scores/filter?grade=A&page=0&size=10
+     *
+     * 4. Filter by student (semua nilai siswa tertentu):
+     *    GET /v1/scores/filter?studentId=uuid-123&page=0&size=10
+     *
+     * 5. Filter by subject (semua nilai mata pelajaran tertentu):
+     *    GET /v1/scores/filter?subjectId=uuid-456&page=0&size=10
+     *
+     * 6. Filter by semester:
+     *    GET /v1/scores/filter?semester=1&page=0&size=10
+     *
+     * 7. Complex filter - kombinasi multiple criteria:
+     *    GET /v1/scores/filter?studentId=uuid-123&semester=1&minScore=75&page=0&size=10&sortBy=score&sortDirection=DESC
+     *
+     * 8. Filter siswa yang tidak lulus (< 75):
+     *    GET /v1/scores/filter?isPassing=false&semester=1&page=0&size=10
+     *
+     * @param minScore Filter nilai minimal (>=)
+     * @param maxScore Filter nilai maksimal (<=)
+     * @param semester Filter semester (partial match)
+     * @param studentId Filter berdasarkan student secureId (exact match)
+     * @param subjectId Filter berdasarkan subject secureId (exact match)
+     * @param grade Filter berdasarkan grade (A, B, C, D, E)
+     * @param isPassing Filter berdasarkan status lulus (true = >= 75, false = < 75)
+     * @param page Halaman data (0-based, default: 0)
+     * @param size Jumlah data per halaman (default: 10, max: 50)
+     * @param sortBy Field untuk sorting (default: score)
+     * @param sortDirection Arah sorting ASC/DESC (default: DESC)
+     * @return PagedResponseDTO berisi list score dan metadata pagination
+     */
+    @GetMapping("/v1/scores/filter")
+    public ResponseEntity<PagedResponseDTO<ScoreResponseDTO>> filterScores(
+            @RequestParam(required = false) Integer minScore,
+            @RequestParam(required = false) Integer maxScore,
+            @RequestParam(required = false) String semester,
+            @RequestParam(required = false) String studentId,
+            @RequestParam(required = false) String subjectId,
+            @RequestParam(required = false) String grade,
+            @RequestParam(required = false) Boolean isPassing,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "score") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection
+    ) {
+        // STEP 1: Build filter DTO dari request params
+        // Tujuan: Kumpulkan semua kriteria filter dalam satu object
+        // Semua field optional, yang null akan diabaikan saat build query
+        ScoreFilterDTO filter = ScoreFilterDTO.builder()
+                .minScore(minScore)         // Dari URL: ?minScore=75
+                .maxScore(maxScore)         // Dari URL: ?maxScore=100
+                .semester(semester)         // Dari URL: ?semester=1
+                .studentId(studentId)       // Dari URL: ?studentId=uuid-123
+                .subjectId(subjectId)       // Dari URL: ?subjectId=uuid-456
+                .grade(grade)               // Dari URL: ?grade=A
+                .isPassing(isPassing)       // Dari URL: ?isPassing=true
+                .build();
+        
+        // STEP 2: Call service layer untuk proses filtering
+        // Service akan:
+        // - Validasi input (size, sortBy, sortDirection)
+        // - Build Specification dari filter DTO
+        // - Execute query ke database
+        // - Convert entity ke DTO
+        // - Return PagedResponseDTO
+        PagedResponseDTO<ScoreResponseDTO> response = scoreService.filterScores(filter, page, size, sortBy, sortDirection);
+        
+        // STEP 3: Return response ke user
         return ResponseEntity.ok(response);
     }
 }

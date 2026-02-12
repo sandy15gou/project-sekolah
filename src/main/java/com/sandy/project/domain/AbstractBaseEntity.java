@@ -1,31 +1,34 @@
 package com.sandy.project.domain;
 
-import java.io.Serializable;
-import java.util.UUID;
-
 import jakarta.persistence.Column;
-import jakarta.persistence.Index;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Table;
-
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 
 @Data
 @MappedSuperclass
-@Table(indexes = {
-        @Index(name="uk_secure_id", columnList = "secure_id")
-})
-public abstract class AbstractBaseEntity implements Serializable {
+public abstract class AbstractBaseEntity {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -2119574796403647424L;
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "secure_id", nullable = false, unique = true)
-    private String secureId=UUID.randomUUID().toString();
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    @Column(name="deleted", columnDefinition = "boolean default false")
-    private boolean deleted;
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

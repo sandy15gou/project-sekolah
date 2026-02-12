@@ -5,13 +5,22 @@ import com.sandy.project.domain.Student;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository untuk Score entity
+ * Extends JpaSpecificationExecutor untuk support dynamic query dengan Specification
+ *
+ * Tujuan: Menyediakan method untuk akses database Score
+ * Method dari JpaSpecificationExecutor yang otomatis tersedia:
+ * - Page<Score> findAll(Specification<Score> spec, Pageable pageable)
+ */
 @Repository
-public interface ScoreRepository extends JpaRepository<Score, Long> {
+public interface ScoreRepository extends JpaRepository<Score, Long>, JpaSpecificationExecutor<Score> {
     
     // ========================================
     // BASIC QUERY - Cari berdasarkan secureId

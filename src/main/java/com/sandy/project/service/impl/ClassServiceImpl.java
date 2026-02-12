@@ -13,11 +13,13 @@ import com.sandy.project.repository.TeacherRepository;
 import com.sandy.project.repository.ScheduleRepository;
 import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.service.ClassService;
+import com.sandy.project.specification.ClassSpecification;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -439,6 +441,75 @@ public class ClassServiceImpl implements ClassService {
             return dto;
         });
         
+        return new PagedResponseDTO<>(dtoPage);
+    }
+    
+    /**
+     * Filter classes dengan multiple criteria menggunakan Specification
+     *
+     * Flow:
+     * 1. Validasi input (size, sortBy, sortDirection)
+     * 2. Build Pageable object
+     * 3. Build Specification dari ClassFilterDTO
+     * 4. Execute query dengan findAll(spec, pageable)
+     * 5. Convert hasil ke DTO
+     * 6. Return PagedResponseDTO
+     */
+    @Override
+    public PagedResponseDTO<ClassResponseDTO> filterClasses(ClassFilterDTO filter, int page, int size, String sortBy, String sortDirection) {
+        // STEP 1: Validasi size tidak melebihi max
+        // Tujuan: Mencegah user request data terlalu banyak sekaligus
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        
+        // STEP 2: Validasi sortBy field (whitelist untuk keamanan)
+        // Tujuan: Mencegah SQL injection & error jika field tidak valid
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "className"; // Default ke className kalau field tidak valid
+        }
+        
+        // STEP 3: Validasi sort direction
+        // Tujuan: Pastikan hanya ASC atau DESC
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC")
+            ? Sort.Direction.DESC   // Z → A, 100 → 1
+            : Sort.Direction.ASC;   // A → Z, 1 → 100
+        
+        // STEP 4: Buat Pageable object
+        // Breakdown:
+        // - page: halaman ke berapa (0-based, 0 = halaman pertama)
+        // - size: berapa data per halaman
+        // - Sort.by(direction, sortBy): urutkan berdasarkan field & arah
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // STEP 5: Build Specification dari filter DTO
+        // Tujuan: Buat instruksi query dinamis berdasarkan field yang diisi
+        // ClassSpecification.filterBy() akan:
+        // - Cek field mana yang tidak null
+        // - Build kondisi WHERE untuk setiap field
+        // - Gabungkan dengan AND logic
+        Specification<Class> spec = ClassSpecification.filterBy(filter);
+        
+        // STEP 6: Query ke database dengan specification & pagination
+        // Method findAll(spec, pageable) OTOMATIS ada dari JpaSpecificationExecutor
+        // Return: Page<Class> berisi data + metadata (totalElements, totalPages, dll)
+        Page<Class> classPage = classRepository.findAll(spec, pageable);
+        
+        // STEP 7: Convert Class entity ke ClassResponseDTO
+        // Tujuan: Hanya kirim data yang perlu (security), hide field internal
+        Page<ClassResponseDTO> dtoPage = classPage.map(kelas -> {
+            ClassResponseDTO dto = new ClassResponseDTO();
+            dto.setSecureId(kelas.getSecureId());           // ID aman (UUID)
+            dto.setClassName(kelas.getClassName());         // Nama kelas
+            dto.setGradeLevel(kelas.getGradeLevel());       // Tingkat kelas
+            dto.setAcademicYear(kelas.getAcademicYear());   // Tahun ajaran
+            return dto;
+        });
+        
+        // STEP 8: Wrap ke PagedResponseDTO dan return
+        // PagedResponseDTO berisi:
+        // - content: List<ClassResponseDTO>
+        // - page, size, totalElements, totalPages, last, first, dll
         return new PagedResponseDTO<>(dtoPage);
     }
 }

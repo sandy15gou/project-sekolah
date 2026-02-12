@@ -2,6 +2,7 @@ package com.sandy.project.web;
 
 import com.sandy.project.dto.PagedResponseDTO;
 import com.sandy.project.dto.ScheduleDetailDTO;
+import com.sandy.project.dto.ScheduleFilterDTO;
 import com.sandy.project.dto.ScheduleResponseDTO;
 import com.sandy.project.service.ScheduleService;
 import jakarta.validation.Valid;
@@ -170,6 +171,83 @@ public class ScheduleResource {
             @RequestParam(defaultValue = "ASC") String sortDirection
     ) {
         PagedResponseDTO<ScheduleResponseDTO> response = scheduleService.searchSchedulesByDayAndSemesterPaged(day, semester, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Filter schedules dengan multiple criteria (advanced filtering)
+     * Support filtering by: day, startTime, endTime, semester, classId, subjectId, teacherId
+     * Semua parameter bersifat optional dan akan di-combine dengan AND logic
+     *
+     * Contoh penggunaan:
+     * 1. Filter by day only:
+     *    GET /v1/schedules/filter?day=Monday&page=0&size=10
+     *
+     * 2. Filter by semester:
+     *    GET /v1/schedules/filter?semester=1&page=0&size=10
+     *
+     * 3. Filter by classId (jadwal untuk kelas tertentu):
+     *    GET /v1/schedules/filter?classId=uuid-123&page=0&size=10
+     *
+     * 4. Filter by teacherId (jadwal mengajar guru tertentu):
+     *    GET /v1/schedules/filter?teacherId=uuid-456&page=0&size=10
+     *
+     * 5. Filter by time range:
+     *    GET /v1/schedules/filter?startTime=08:00&endTime=10:00&page=0&size=10
+     *
+     * 6. Complex filter - kombinasi multiple criteria:
+     *    GET /v1/schedules/filter?day=Monday&semester=1&classId=uuid-123&page=0&size=10&sortBy=startTime&sortDirection=ASC
+     *
+     * @param day Filter hari (partial match, case insensitive)
+     * @param startTime Filter waktu mulai (partial match)
+     * @param endTime Filter waktu selesai (partial match)
+     * @param semester Filter semester (partial match)
+     * @param classId Filter berdasarkan class secureId (exact match)
+     * @param subjectId Filter berdasarkan subject secureId (exact match)
+     * @param teacherId Filter berdasarkan teacher secureId (exact match)
+     * @param page Halaman data (0-based, default: 0)
+     * @param size Jumlah data per halaman (default: 10, max: 50)
+     * @param sortBy Field untuk sorting (default: day)
+     * @param sortDirection Arah sorting ASC/DESC (default: ASC)
+     * @return PagedResponseDTO berisi list schedule dan metadata pagination
+     */
+    @GetMapping("/v1/schedules/filter")
+    public ResponseEntity<PagedResponseDTO<ScheduleResponseDTO>> filterSchedules(
+            @RequestParam(required = false) String day,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String semester,
+            @RequestParam(required = false) String classId,
+            @RequestParam(required = false) String subjectId,
+            @RequestParam(required = false) String teacherId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "day") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection
+    ) {
+        // STEP 1: Build filter DTO dari request params
+        // Tujuan: Kumpulkan semua kriteria filter dalam satu object
+        // Semua field optional, yang null akan diabaikan saat build query
+        ScheduleFilterDTO filter = ScheduleFilterDTO.builder()
+                .day(day)                   // Dari URL: ?day=Monday
+                .startTime(startTime)       // Dari URL: ?startTime=08:00
+                .endTime(endTime)           // Dari URL: ?endTime=10:00
+                .semester(semester)         // Dari URL: ?semester=1
+                .classId(classId)           // Dari URL: ?classId=uuid-123
+                .subjectId(subjectId)       // Dari URL: ?subjectId=uuid-456
+                .teacherId(teacherId)       // Dari URL: ?teacherId=uuid-789
+                .build();
+        
+        // STEP 2: Call service layer untuk proses filtering
+        // Service akan:
+        // - Validasi input (size, sortBy, sortDirection)
+        // - Build Specification dari filter DTO
+        // - Execute query ke database
+        // - Convert entity ke DTO
+        // - Return PagedResponseDTO
+        PagedResponseDTO<ScheduleResponseDTO> response = scheduleService.filterSchedules(filter, page, size, sortBy, sortDirection);
+        
+        // STEP 3: Return response ke user
         return ResponseEntity.ok(response);
     }
 }
