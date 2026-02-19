@@ -3,12 +3,14 @@ package com.sandy.project.domain;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "subjects")
@@ -35,8 +37,9 @@ public class    Subject extends AbstractBaseEntity {
     )
     private List<Teacher> eligibleTeachers;
 
-    @PrePersist
-    public void prePersist() {
+    @Override
+    protected void onCreate() {
+        super.onCreate();
         if (this.secureId == null) {
             this.secureId = UUID.randomUUID().toString();
         }

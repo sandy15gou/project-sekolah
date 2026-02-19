@@ -3,6 +3,7 @@ package com.sandy.project.domain;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.SQLDelete;
@@ -10,6 +11,7 @@ import org.hibernate.annotations.Where;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamicUpdate
@@ -48,8 +50,9 @@ public class Schedule extends AbstractBaseEntity {
     @Column(name = "semester", nullable = false)
     private String semester;
 
-    @PrePersist
-    public void prePersist() {
+    @Override
+    protected void onCreate() {
+        super.onCreate();
         if (this.secureId == null) {
             this.secureId = java.util.UUID.randomUUID().toString();
         }

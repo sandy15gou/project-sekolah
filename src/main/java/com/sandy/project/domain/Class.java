@@ -2,6 +2,7 @@ package com.sandy.project.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.SQLDelete;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @DynamicUpdate
 @SQLDelete(sql = "UPDATE classes SET deleted = true WHERE id = ?")
 @Where(clause = "deleted = false")
@@ -55,8 +57,9 @@ public class Class extends AbstractBaseEntity {
     @Column(name = "description")
     private String description;
     
-    @PrePersist
-    public void prePersist() {
+    @Override
+    protected void onCreate() {
+        super.onCreate();
         if (this.secureId == null) {
             this.secureId = UUID.randomUUID().toString();
         }
