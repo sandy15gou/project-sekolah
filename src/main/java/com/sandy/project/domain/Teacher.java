@@ -12,15 +12,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamicUpdate
@@ -49,8 +50,9 @@ public class Teacher extends AbstractBaseEntity {
     @Column(name = "address")
     private String address;
     
-    @PrePersist
-    public void prePersist() {
+    @Override
+    protected void onCreate() {
+        super.onCreate();
         if (this.secureId == null) {
             this.secureId = UUID.randomUUID().toString();
         }

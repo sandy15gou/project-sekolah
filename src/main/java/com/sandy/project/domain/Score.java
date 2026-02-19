@@ -3,6 +3,7 @@ package com.sandy.project.domain;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.SQLDelete;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamicUpdate
@@ -42,8 +44,9 @@ public class Score extends AbstractBaseEntity {
     @Column(name = "semester", nullable = false, length = 1)
     private String semester;
     
-    @PrePersist
-    public void prePersist() {
+    @Override
+    protected void onCreate() {
+        super.onCreate();
         if (this.secureId == null) {
             this.secureId = UUID.randomUUID().toString();
         }
