@@ -6,6 +6,7 @@ import com.sandy.project.domain.Teacher;
 import com.sandy.project.domain.Schedule;
 import com.sandy.project.domain.Subject;
 import com.sandy.project.dto.*;
+import com.sandy.project.dto.query.ClassQueryDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.ClassRepository;
 import com.sandy.project.repository.StudentRepository;
@@ -87,27 +88,30 @@ public class ClassServiceImpl implements ClassService {
     
     @Override
     public ClassDetailDTO findClassDetail(String classId) {
+        // OPTIMASI: Gunakan JPA Projection untuk mendapatkan Class + Teacher dalam 1 query
+        // Menghindari N+1 problem dari lazy loading homeroomTeacher
+        ClassQueryDTO queryDTO = classRepository.findClassQueryDTOBySecureId(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
+        
+        // Masih perlu query entity lengkap untuk mendapat students (ManyToMany)
         Class kelas = classRepository.findBySecureId(classId)
                 .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
         
         ClassDetailDTO dto = new ClassDetailDTO();
-        dto.setSecureId(kelas.getSecureId());
-        dto.setClassName(kelas.getClassName());
-        dto.setGradeLevel(kelas.getGradeLevel());
-        dto.setAcademicYear(kelas.getAcademicYear());
-        dto.setMaxCapacity(kelas.getMaxCapacity());
-        dto.setDescription(kelas.getDescription());
+        // Ambil data dari QueryDTO (sudah ter-JOIN, tidak trigger lazy loading)
+        dto.setSecureId(queryDTO.secureId());
+        dto.setClassName(queryDTO.className());
+        dto.setGradeLevel(queryDTO.gradeLevel());
+        dto.setAcademicYear(queryDTO.academicYear());
+        dto.setMaxCapacity(queryDTO.maxCapacity());
+        dto.setDescription(queryDTO.description());
         
-        // Homeroom Teacher
-        TeacherDetailDTO teacherDto = new TeacherDetailDTO();
-        Teacher homeroomTeacher = kelas.getHomeroomTeacher();
-        if (homeroomTeacher != null) {
-            teacherDto.setSecureId(homeroomTeacher.getSecureId());
-            teacherDto.setTeacherId(homeroomTeacher.getId().toString());
-            teacherDto.setTeacherName(homeroomTeacher.getName());
-            teacherDto.setTeacherBirthDate(homeroomTeacher.getBirthDate() != null ? homeroomTeacher.getBirthDate().toEpochDay() : null);
-            teacherDto.setTeacherGender(homeroomTeacher.getGender());
-            teacherDto.setTeacherAddress(homeroomTeacher.getAddress());
+        // Homeroom Teacher dari QueryDTO (tidak perlu akses lazy field)
+        if (queryDTO.homeroomTeacherSecureId() != null) {
+            TeacherDetailDTO teacherDto = new TeacherDetailDTO();
+            teacherDto.setSecureId(queryDTO.homeroomTeacherSecureId());
+            teacherDto.setTeacherName(queryDTO.homeroomTeacherName());
+            // Jika butuh data lengkap teacher, harus query terpisah atau buat TeacherQueryDTO
             dto.setHomeroomTeacher(teacherDto);
         }
         
@@ -216,11 +220,11 @@ public class ClassServiceImpl implements ClassService {
                 }).collect(Collectors.toList());
         
         // Add homeroom teacher to the list if not already present
-        if (homeroomTeacher != null) {
+        if (queryDTO.homeroomTeacherSecureId() != null) {
             boolean homeroomAlreadyInList = teacherDTOs.stream()
-                    .anyMatch(t -> t.getSecureId().equals(homeroomTeacher.getSecureId()));
-            if (!homeroomAlreadyInList) {
-                teacherDTOs.add(teacherDto);
+                    .anyMatch(t -> t.getSecureId().equals(queryDTO.homeroomTeacherSecureId()));
+            if (!homeroomAlreadyInList && dto.getHomeroomTeacher() != null) {
+                teacherDTOs.add(dto.getHomeroomTeacher());
             }
         }
         dto.setTeachers(teacherDTOs);

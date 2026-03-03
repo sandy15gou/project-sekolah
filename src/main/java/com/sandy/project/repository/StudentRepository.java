@@ -3,13 +3,54 @@ import java.util.List;
 import java.util.Optional;
 
 import com.sandy.project.domain.Student;
+import com.sandy.project.dto.query.StudentQueryDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 
 public interface StudentRepository extends JpaRepository<Student, Long>, JpaSpecificationExecutor<Student> {
+    
+    // ========== JPA PROJECTION QUERIES - AVOID N+1 PROBLEM ==========
+    
+    /**
+     * Find student by secureId dengan JPA Projection - 1 query JOIN
+     * Mengambil Student + Class info sekaligus tanpa lazy loading
+     */
+    @Query("SELECT new com.sandy.project.dto.query.StudentQueryDTO(" +
+            "s.secureId, s.name, s.birthDate, s.gender, s.address, " +
+            "c.secureId, c.className, c.gradeLevel) " +
+            "FROM Student s LEFT JOIN s.studentClass c " +
+            "WHERE s.secureId = :secureId AND s.deleted = false")
+    Optional<StudentQueryDTO> findStudentQueryDTOBySecureId(String secureId);
+    
+    /**
+     * Fetch ALL students dengan JPA Projection - SOLUSI N+1 Problem
+     *
+     * Menggunakan 1 query JOIN untuk ambil Student + Class sekaligus
+     * tanpa lazy loading terpisah
+     */
+    @Query("SELECT new com.sandy.project.dto.query.StudentQueryDTO(" +
+            "s.secureId, s.name, s.birthDate, s.gender, s.address, " +
+            "c.secureId, c.className, c.gradeLevel) " +
+            "FROM Student s LEFT JOIN s.studentClass c " +
+            "WHERE s.deleted = false")
+    List<StudentQueryDTO> findAllStudentQueryDTO();
+    
+    /**
+     * Fetch students dengan pagination dan JPA Projection
+     * Gunakan ini untuk list view dengan banyak data
+     */
+    @Query("SELECT new com.sandy.project.dto.query.StudentQueryDTO(" +
+            "s.secureId, s.name, s.birthDate, s.gender, s.address, " +
+            "c.secureId, c.className, c.gradeLevel) " +
+            "FROM Student s LEFT JOIN s.studentClass c " +
+            "WHERE s.deleted = false")
+    Page<StudentQueryDTO> findAllStudentQueryDTOPaged(Pageable pageable);
+    
+    // ========== ORIGINAL ENTITY METHODS ==========
     
     // NOTE: findById(Long id) sudah otomatis ada dari JpaRepository
     // Digunakan untuk internal system (join table, cascade operations)

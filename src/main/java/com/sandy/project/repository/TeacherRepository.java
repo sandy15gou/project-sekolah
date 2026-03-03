@@ -1,17 +1,58 @@
 package com.sandy.project.repository;
 
 import com.sandy.project.domain.Teacher;
+import com.sandy.project.dto.query.TeacherQueryDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TeacherRepository extends JpaRepository<Teacher, Long>,
                                           JpaSpecificationExecutor<Teacher> {
     
+    // ========================================
+    // JPA PROJECTION - Solusi N+1 Problem
+    // ========================================
+    
+    /**
+     * Fetch single Teacher dengan JPA Projection - Menghindari N+1
+     *
+     * Query hanya ambil data yang dibutuhkan dalam 1 query
+     */
+    @Query("SELECT new com.sandy.project.dto.query.TeacherQueryDTO(" +
+            "t.secureId, t.name, t.gender, t.birthDate, t.address) " +
+            "FROM Teacher t " +
+            "WHERE t.secureId = :secureId AND t.deleted = false")
+    Optional<TeacherQueryDTO> findTeacherQueryDTOBySecureId(String secureId);
+    
+    /**
+     * Fetch ALL Teachers dengan JPA Projection - SOLUSI N+1 Problem
+     *
+     * Menggunakan 1 query untuk ambil semua Teacher
+     * tanpa lazy loading terpisah
+     */
+    @Query("SELECT new com.sandy.project.dto.query.TeacherQueryDTO(" +
+            "t.secureId, t.name, t.gender, t.birthDate, t.address) " +
+            "FROM Teacher t " +
+            "WHERE t.deleted = false")
+    List<TeacherQueryDTO> findAllTeacherQueryDTO();
+    
+    /**
+     * Search Teachers by name dengan JPA Projection
+     */
+    @Query("SELECT new com.sandy.project.dto.query.TeacherQueryDTO(" +
+            "t.secureId, t.name, t.gender, t.birthDate, t.address) " +
+            "FROM Teacher t " +
+            "WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :name, '%')) AND t.deleted = false")
+    List<TeacherQueryDTO> findTeacherQueryDTOByNameContaining(String name);
  
+    // ========================================
+    // BASIC QUERY - Cari berdasarkan secureId
+    // ========================================
     Optional<Teacher> findBySecureId(String secureId);
     
     // ========== PAGINATION METHODS ==========

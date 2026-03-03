@@ -2,6 +2,7 @@ package com.sandy.project.domain;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,6 +34,9 @@ public class AppUser extends AbstractBaseEntity implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "secure_id", nullable = false, unique = true)
+    private String secureId;
+
     @Column(name = "username", nullable = false)
     private String username;
 
@@ -44,6 +48,18 @@ public class AppUser extends AbstractBaseEntity implements UserDetails {
             @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "role_id", referencedColumnName = "id") })
     private List<Role> roles;
+
+    /**
+     * Override onCreate to add secure_id generation
+     * Calls super.onCreate() to maintain base entity behavior
+     */
+    @Override
+    protected void onCreate() {
+        super.onCreate(); // Set createdAt, updatedAt
+        if (this.secureId == null || this.secureId.isEmpty()) {
+            this.secureId = UUID.randomUUID().toString();
+        }
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
