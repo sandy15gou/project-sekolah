@@ -6,6 +6,7 @@ import com.sandy.project.dto.TeacherCreateDTO;
 import com.sandy.project.dto.TeacherDetailDTO;
 import com.sandy.project.dto.TeacherFilterDTO;
 import com.sandy.project.dto.TeacherResponseDTO;
+import com.sandy.project.dto.query.TeacherQueryDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.TeacherRepository;
 import com.sandy.project.service.TeacherService;
@@ -69,17 +70,33 @@ public class TeacherServiceImpl implements TeacherService {
     
     @Override
     public TeacherDetailDTO findTeacherDetail(String id) {
-        Teacher teacher = teacherRepository.findBySecureId(id)
+        // OPTIMASI: Gunakan JPA Projection untuk konsistensi
+        TeacherQueryDTO queryDTO = teacherRepository.findTeacherQueryDTOBySecureId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
         
-        TeacherDetailDTO dto = new TeacherDetailDTO();
-        dto.setSecureId(teacher.getSecureId());
-        dto.setTeacherId(teacher.getId().toString());
-        dto.setTeacherName(teacher.getName());
-        dto.setTeacherBirthDate(teacher.getBirthDate().toEpochDay());
-        dto.setTeacherGender(teacher.getGender());
-        dto.setTeacherAddress(teacher.getAddress());
+        return convertQueryDTOToDetailDTO(queryDTO);
+    }
+    
+    @Override
+    public List<TeacherDetailDTO> findAllTeachers() {
+        // OPTIMASI: Gunakan JPA Projection untuk menghindari N+1 problem
+        List<TeacherQueryDTO> queryDTOs = teacherRepository.findAllTeacherQueryDTO();
         
+        return queryDTOs.stream()
+                .map(this::convertQueryDTOToDetailDTO)
+                .toList();
+    }
+    
+    /**
+     * Helper method untuk convert TeacherQueryDTO ke TeacherDetailDTO
+     */
+    private TeacherDetailDTO convertQueryDTOToDetailDTO(TeacherQueryDTO queryDTO) {
+        TeacherDetailDTO dto = new TeacherDetailDTO();
+        dto.setSecureId(queryDTO.secureId());
+        dto.setTeacherName(queryDTO.name());
+        dto.setTeacherGender(queryDTO.gender());
+        dto.setTeacherBirthDate(queryDTO.birthDate() != null ? queryDTO.birthDate().toEpochDay() : null);
+        dto.setTeacherAddress(queryDTO.address());
         return dto;
     }
     

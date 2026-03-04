@@ -8,6 +8,7 @@ import com.sandy.project.dto.StudentDetailDTO;
 import com.sandy.project.dto.StudentFilterDTO;
 import com.sandy.project.dto.StudentResponseDTO;
 import com.sandy.project.dto.StudentUpdateDTO;
+import com.sandy.project.dto.query.StudentQueryDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.StudentRepository;
 import com.sandy.project.specification.StudentSpecification;
@@ -178,16 +179,41 @@ public class StudentServiceImpl implements StudentService {
     }
     @Override
     public StudentDetailDTO findStudentDetail(String id) {
-        Student student = studentRepository.findBySecureId(id)
+        // OPTIMASI: Gunakan JPA Projection untuk menghindari N+1 problem
+        // Mengambil Student + Class info dalam 1 query JOIN
+        StudentQueryDTO queryDTO = studentRepository.findStudentQueryDTOBySecureId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
         
+        return convertQueryDTOToDetailDTO(queryDTO);
+    }
+    
+    @Override
+    public List<StudentDetailDTO> findAllStudents() {
+        // OPTIMASI: Gunakan JPA Projection untuk menghindari N+1 problem
+        // Mengambil Student + Class info dalam 1 query JOIN
+        List<StudentQueryDTO> queryDTOs = studentRepository.findAllStudentQueryDTO();
+        
+        return queryDTOs.stream()
+                .map(this::convertQueryDTOToDetailDTO)
+                .toList();
+    }
+    
+    /**
+     * Helper method untuk convert StudentQueryDTO ke StudentDetailDTO
+     */
+    private StudentDetailDTO convertQueryDTOToDetailDTO(StudentQueryDTO queryDTO) {
         StudentDetailDTO dto = new StudentDetailDTO();
-        dto.setSecureId(student.getSecureId());
-        dto.setStudentName(student.getName());
-        dto.setStudentId(student.getId().toString());
-        dto.setStudentBirthDate(student.getBirthDate().toEpochDay());
-        dto.setStudentGender(student.getGender());
-        dto.setStudentAddress(student.getAddress());
+        dto.setSecureId(queryDTO.secureId());
+        dto.setStudentName(queryDTO.name());
+        dto.setStudentBirthDate(queryDTO.birthDate() != null ? queryDTO.birthDate().toEpochDay() : null);
+        dto.setStudentGender(queryDTO.gender());
+        dto.setStudentAddress(queryDTO.address());
+        
+        // Class info dari JPA Projection (tidak trigger lazy loading)
+        if (queryDTO.classSecureId() != null) {
+            dto.setClassSecureId(queryDTO.classSecureId());
+            dto.setClassName(queryDTO.className());
+        }
         
         return dto;
     }

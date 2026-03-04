@@ -8,6 +8,7 @@ import com.sandy.project.dto.ScoreCreateDTO;
 import com.sandy.project.dto.ScoreFilterDTO;
 import com.sandy.project.dto.ScoreResponseDTO;
 import com.sandy.project.dto.ScoreUpdateDTO;
+import com.sandy.project.dto.query.ScoreQueryDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.ScoreRepository;
 import com.sandy.project.repository.StudentRepository;
@@ -106,10 +107,11 @@ public class ScoreServiceImpl implements ScoreService {
     // ========================================
     @Override
     public ScoreResponseDTO findScoreDetailById(String scoreId) {
-        Score score = scoreRepository.findBySecureId(scoreId)
+        // OPTIMASI: Gunakan JPA Projection untuk menghindari N+1 problem
+        ScoreQueryDTO queryDTO = scoreRepository.findScoreQueryDTOBySecureId(scoreId)
                 .orElseThrow(() -> new ResourceNotFoundException("Score not found with ID: " + scoreId));
         
-        return convertToResponseDTO(score);
+        return convertQueryDTOToResponseDTO(queryDTO);
     }
     
     // ========================================
@@ -117,10 +119,12 @@ public class ScoreServiceImpl implements ScoreService {
     // ========================================
     @Override
     public List<ScoreResponseDTO> findAllScores() {
-        List<Score> scores = scoreRepository.findAll();
+        // OPTIMASI: Gunakan JPA Projection untuk menghindari N+1 problem
+        // Mengambil Score + Student + Subject dalam 1 query JOIN
+        List<ScoreQueryDTO> queryDTOs = scoreRepository.findAllScoreQueryDTO();
         
-        return scores.stream()
-                .map(this::convertToResponseDTO)
+        return queryDTOs.stream()
+                .map(this::convertQueryDTOToResponseDTO)
                 .toList();
     }
     
@@ -133,11 +137,11 @@ public class ScoreServiceImpl implements ScoreService {
         studentRepository.findBySecureId(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with ID: " + studentId));
         
-        // Ambil semua nilai student tersebut
-        List<Score> scores = scoreRepository.findByStudent_SecureId(studentId);
+        // OPTIMASI: Gunakan JPA Projection untuk menghindari N+1 problem
+        List<ScoreQueryDTO> queryDTOs = scoreRepository.findScoreQueryDTOByStudentSecureId(studentId);
         
-        return scores.stream()
-                .map(this::convertToResponseDTO)
+        return queryDTOs.stream()
+                .map(this::convertQueryDTOToResponseDTO)
                 .toList();
     }
     
@@ -173,6 +177,40 @@ public class ScoreServiceImpl implements ScoreService {
                 .grade(score.getGrade())  // Business logic dari entity
                 .isPassing(score.isPassing())  // Business logic dari entity
                 .build();
+    }
+    
+    /**
+     * Helper method untuk convert ScoreQueryDTO (JPA Projection) ke ScoreResponseDTO
+     * Digunakan untuk menghindari N+1 problem
+     */
+    private ScoreResponseDTO convertQueryDTOToResponseDTO(ScoreQueryDTO queryDTO) {
+        // Calculate grade dan isPassing berdasarkan score value
+        int scoreValue = queryDTO.score() != null ? queryDTO.score() : 0;
+        String grade = calculateGrade(scoreValue);
+        boolean isPassing = scoreValue >= 60;
+        
+        return ScoreResponseDTO.builder()
+                .secureId(queryDTO.secureId())
+                .studentId(queryDTO.studentSecureId())
+                .studentName(queryDTO.studentName())
+                .subjectId(queryDTO.subjectSecureId())
+                .subjectName(queryDTO.subjectName())
+                .score(queryDTO.score())
+                .semester(queryDTO.semester())
+                .grade(grade)
+                .isPassing(isPassing)
+                .build();
+    }
+    
+    /**
+     * Helper method untuk kalkulasi grade berdasarkan score
+     */
+    private String calculateGrade(int score) {
+        if (score >= 90) return "A";
+        if (score >= 80) return "B";
+        if (score >= 70) return "C";
+        if (score >= 60) return "D";
+        return "E";
     }
     
     // ========== PAGINATION METHODS ==========

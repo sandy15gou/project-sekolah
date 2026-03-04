@@ -20,6 +20,12 @@ public interface TeacherService {
     
     public TeacherResponseDTO findTeacherById(String id);
     
+    /**
+     * Find all teachers menggunakan JPA Projection - SOLUSI N+1 Problem
+     * @return List of TeacherDetailDTO
+     */
+    List<TeacherDetailDTO> findAllTeachers();
+    
     // ========== PAGINATION METHODS ==========
     
     /**

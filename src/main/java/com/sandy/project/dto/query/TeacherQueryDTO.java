@@ -22,8 +22,8 @@ import java.time.LocalDate;
 public record TeacherQueryDTO(
         String secureId,
         String name,
-        LocalDate birthDate,
         String gender,
+        LocalDate birthDate,
         String address
 ) implements Serializable {
 }

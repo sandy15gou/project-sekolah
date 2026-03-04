@@ -8,19 +8,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import lombok.extern.slf4j.Slf4j;
-
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("test")
-@Slf4j
 public class PasswordEncryptedTest {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
-    
     @Test
     public void encryptPassword() {
-        log.info("password {}", passwordEncoder.encode("test1234"));
+        System.out.println("password: " + passwordEncoder.encode("test1234"));
     }
 }

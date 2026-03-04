@@ -18,4 +18,8 @@ public class StudentDetailDTO implements Serializable {
     private Long studentBirthDate;
     private String studentGender;
     private String studentAddress;
+    
+    // Class info (dari JPA Projection)
+    private String classSecureId;
+    private String className;
 }

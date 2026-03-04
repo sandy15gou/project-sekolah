@@ -27,6 +27,7 @@ public record StudentQueryDTO(
         String address,
         // Class (dari relasi LAZY)
         String classSecureId,
-        String className
+        String className,
+        String classGradeLevel
 ) implements Serializable {
 }

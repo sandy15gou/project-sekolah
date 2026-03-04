@@ -22,6 +22,13 @@ public interface StudentService {
     
     StudentDetailDTO findStudentDetail(String id);
     
+    /**
+     * Find all students menggunakan JPA Projection - SOLUSI N+1 Problem
+     * Mengambil Student + Class info dalam 1 query JOIN
+     * @return List of StudentDetailDTO
+     */
+    List<StudentDetailDTO> findAllStudents();
+    
     // ========== PAGINATION METHODS ========= =
     
     /**

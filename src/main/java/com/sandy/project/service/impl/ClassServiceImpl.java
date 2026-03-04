@@ -239,39 +239,30 @@ public class ClassServiceImpl implements ClassService {
     
     @Override
     public List<ClassDetailDTO> findAllClasses() {
-        List<Class> classes = classRepository.findAll();
-        return classes.stream().map(kelas -> {
+        // OPTIMASI: Gunakan JPA Projection untuk menghindari N+1 problem
+        // Mengambil Class + Teacher dalam 1 query JOIN
+        List<ClassQueryDTO> queryDTOs = classRepository.findAllClassQueryDTO();
+        
+        return queryDTOs.stream().map(queryDTO -> {
             ClassDetailDTO dto = new ClassDetailDTO();
-            dto.setSecureId(kelas.getSecureId());
-            dto.setClassName(kelas.getClassName());
-            dto.setGradeLevel(kelas.getGradeLevel());
-            dto.setAcademicYear(kelas.getAcademicYear());
+            dto.setSecureId(queryDTO.secureId());
+            dto.setClassName(queryDTO.className());
+            dto.setGradeLevel(queryDTO.gradeLevel());
+            dto.setAcademicYear(queryDTO.academicYear());
+            dto.setMaxCapacity(queryDTO.maxCapacity());
+            dto.setDescription(queryDTO.description());
             
-            Teacher homeroomTeacher = kelas.getHomeroomTeacher();
-            if (homeroomTeacher != null) {
+            // Homeroom Teacher dari QueryDTO (tidak trigger lazy loading)
+            if (queryDTO.homeroomTeacherSecureId() != null) {
                 TeacherDetailDTO teacherDto = new TeacherDetailDTO();
-                teacherDto.setSecureId(homeroomTeacher.getSecureId());
-                teacherDto.setTeacherId(homeroomTeacher.getId().toString());
-                teacherDto.setTeacherName(homeroomTeacher.getName());
-                teacherDto.setTeacherBirthDate(homeroomTeacher.getBirthDate().toEpochDay());
-                teacherDto.setTeacherGender(homeroomTeacher.getGender());
-                teacherDto.setTeacherAddress(homeroomTeacher.getAddress());
+                teacherDto.setSecureId(queryDTO.homeroomTeacherSecureId());
+                teacherDto.setTeacherName(queryDTO.homeroomTeacherName());
                 dto.setHomeroomTeacher(teacherDto);
             }
             
-            List<StudentDetailDTO> studentDTOs = kelas.getStudents() != null
-                    ? kelas.getStudents().stream().map(student -> {
-                StudentDetailDTO studentDto = new StudentDetailDTO();
-                studentDto.setSecureId(student.getSecureId());
-                studentDto.setStudentId(student.getId().toString());
-                studentDto.setStudentName(student.getName());
-                studentDto.setStudentBirthDate(student.getBirthDate().toEpochDay());
-                studentDto.setStudentGender(student.getGender());
-                studentDto.setStudentAddress(student.getAddress());
-                return studentDto;
-            }).toList()
-                    : new ArrayList<>();
-            dto.setStudents(studentDTOs);
+            // NOTE: Jika butuh students, harus query terpisah atau gunakan method lain
+            // Untuk list view, biasanya tidak perlu students detail
+            dto.setStudents(new ArrayList<>());
             
             return dto;
         }).toList();

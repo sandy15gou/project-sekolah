@@ -5,6 +5,7 @@ import com.sandy.project.domain.Class;
 import com.sandy.project.domain.Subject;
 import com.sandy.project.domain.Teacher;
 import com.sandy.project.dto.*;
+import com.sandy.project.dto.query.ScheduleQueryDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
 import com.sandy.project.repository.ScheduleRepository;
 import com.sandy.project.repository.ClassRepository;
@@ -47,8 +48,12 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public List<ScheduleDetailDTO> findAllSchedules() {
-        return scheduleRepository.findAll().stream()
-                .map(this::mapToDetailDTO)
+        // OPTIMASI: Gunakan JPA Projection untuk menghindari N+1 problem
+        // Mengambil Schedule + Class + Subject + Teacher dalam 1 query JOIN
+        List<ScheduleQueryDTO> queryDTOs = scheduleRepository.findAllScheduleQueryDTO();
+        
+        return queryDTOs.stream()
+                .map(this::mapQueryDTOToDetailDTO)
                 .collect(Collectors.toList());
     }
 
@@ -244,6 +249,45 @@ public class ScheduleServiceImpl implements ScheduleService {
             teacherDto.setTeacherAddress(schedule.getTeacher().getAddress());
             dto.setTeacher(teacherDto);
         }
+        return dto;
+    }
+    
+    /**
+     * Mapping dari JPA Projection DTO ke Response DTO
+     * Tidak ada lazy loading karena data sudah ter-JOIN di query
+     */
+    private ScheduleDetailDTO mapQueryDTOToDetailDTO(ScheduleQueryDTO queryDTO) {
+        ScheduleDetailDTO dto = new ScheduleDetailDTO();
+        dto.setSecureId(queryDTO.secureId());
+        dto.setDay(queryDTO.day());
+        dto.setStartTime(queryDTO.startTime());
+        dto.setEndTime(queryDTO.endTime());
+        dto.setSemester(queryDTO.semester());
+        
+        // Class info dari JPA Projection (tidak trigger lazy loading)
+        if (queryDTO.classSecureId() != null) {
+            ClassDetailDTO classDto = new ClassDetailDTO();
+            classDto.setSecureId(queryDTO.classSecureId());
+            classDto.setClassName(queryDTO.className());
+            dto.setSchoolClass(classDto);
+        }
+        
+        // Subject info dari JPA Projection
+        if (queryDTO.subjectSecureId() != null) {
+            SubjectResponseDTO subjectDto = new SubjectResponseDTO();
+            subjectDto.setSecureId(queryDTO.subjectSecureId());
+            subjectDto.setName(queryDTO.subjectName());
+            dto.setSubject(subjectDto);
+        }
+        
+        // Teacher info dari JPA Projection
+        if (queryDTO.teacherSecureId() != null) {
+            TeacherDetailDTO teacherDto = new TeacherDetailDTO();
+            teacherDto.setSecureId(queryDTO.teacherSecureId());
+            teacherDto.setTeacherName(queryDTO.teacherName());
+            dto.setTeacher(teacherDto);
+        }
+        
         return dto;
     }
     
