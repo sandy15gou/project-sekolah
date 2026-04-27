@@ -40,17 +40,44 @@ public class SubjectServiceImpl implements SubjectService {
     
     @Override
     public SubjectDetailDTO findSubjectDetail(String subjectId) {
-        Subject subject = subjectRepository.findBySecureId(subjectId);
-        if (subject == null) {
-            throw new ResourceNotFoundException("Subject not found");
-        }
+        // OPTIMASI: Gunakan JOIN FETCH untuk eager load eligible teachers
+        Subject subject = subjectRepository.findBySecureIdWithTeachers(subjectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Subject not found"));
         return mapToDetailDTO(subject);
     }
     
+    
+    
     @Override
     public List<SubjectDetailDTO> findAllSubjects() {
-        return subjectRepository.findAll().stream()
-                .map(this::mapToDetailDTO)
+        // OPTIMASI dengan JPA Projection - menghindari N+1 problem
+        // 1. Fetch semua subjects tanpa teachers (1 query)
+        List<com.sandy.project.dto.query.SubjectQueryDTO> queryDTOs = subjectRepository.findAllSubjectQueryDTO();
+        
+        // 2. Convert ke DetailDTO dan fetch teachers untuk masing-masing subject
+        return queryDTOs.stream()
+                .map(queryDTO -> {
+                    SubjectDetailDTO dto = new SubjectDetailDTO();
+                    dto.setSecureId(queryDTO.secureId());
+                    dto.setName(queryDTO.name());
+                    dto.setDescription(queryDTO.description());
+                    
+                    List<com.sandy.project.dto.query.TeacherQueryDTO> teacherQueryDTOs =
+                        subjectRepository.findEligibleTeachersBySubjectSecureId(queryDTO.secureId());
+                    
+                    List<TeacherDetailDTO> teachers = teacherQueryDTOs.stream()
+                            .map(t -> {
+                                TeacherDetailDTO teacher = new TeacherDetailDTO();
+                                teacher.setSecureId(t.secureId());
+                                teacher.setTeacherName(t.name());
+                                teacher.setTeacherGender(t.gender());
+                                return teacher;
+                            })
+                            .collect(Collectors.toList());
+                    
+                    dto.setEligibleTeachers(teachers);
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
     

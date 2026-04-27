@@ -25,7 +25,6 @@ public record StudentQueryDTO(
         LocalDate birthDate,
         String gender,
         String address,
-        // Class (dari relasi LAZY)
         String classSecureId,
         String className,
         String classGradeLevel

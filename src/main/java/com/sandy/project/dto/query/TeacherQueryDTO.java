@@ -1,29 +1,18 @@
 package com.sandy.project.dto.query;
 
-import java.io.Serializable;
 import java.time.LocalDate;
 
 /**
- * Query DTO untuk Teacher entity - untuk konsistensi dengan entity lain
- *
- * Teacher tidak memiliki relasi LAZY yang perlu di-join,
- * tetapi DTO ini berguna untuk:
- * 1. Konsistensi API response
- * 2. Menghindari expose internal ID
- * 3. Optimasi transfer data (hanya field yang diperlukan)
- *
- * Contoh JPQL:
- * SELECT new com.sandy.project.dto.query.TeacherQueryDTO(
- *     t.secureId, t.name, t.birthDate, t.gender, t.address
- * )
- * FROM Teacher t
- * WHERE t.deleted = false
+ * JPA Projection untuk Teacher
+ * Digunakan untuk optimasi query Teacher, menghindari N+1 problem
+ * Hanya fetch field yang dibutuhkan untuk list/detail view
  */
 public record TeacherQueryDTO(
         String secureId,
         String name,
-        String gender,
+        String address,
         LocalDate birthDate,
-        String address
-) implements Serializable {
+        String gender
+) {
 }
+

@@ -36,7 +36,6 @@ public interface ScheduleService {
      * @return PagedResponseDTO berisi hasil pencarian
      */
     PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByDayPaged(String day, int page, int size, String sortBy, String sortDirection);
-    
     /**
      * Search schedules by semester dengan pagination
      * @param semester Semester yang dicari (e.g., "1", "2")

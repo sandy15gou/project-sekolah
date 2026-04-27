@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,35 +21,41 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long>,
     
     /**
      * Fetch single Teacher dengan JPA Projection - Menghindari N+1
-     *
      * Query hanya ambil data yang dibutuhkan dalam 1 query
      */
     @Query("SELECT new com.sandy.project.dto.query.TeacherQueryDTO(" +
-            "t.secureId, t.name, t.gender, t.birthDate, t.address) " +
+            "t.secureId, t.name, t.address, t.birthDate, t.gender) " +
             "FROM Teacher t " +
             "WHERE t.secureId = :secureId AND t.deleted = false")
-    Optional<TeacherQueryDTO> findTeacherQueryDTOBySecureId(String secureId);
+    Optional<TeacherQueryDTO> findTeacherQueryDTOBySecureId(@Param("secureId") String secureId);
     
     /**
      * Fetch ALL Teachers dengan JPA Projection - SOLUSI N+1 Problem
-     *
-     * Menggunakan 1 query untuk ambil semua Teacher
-     * tanpa lazy loading terpisah
+     * Menggunakan 1 query untuk ambil semua Teacher tanpa lazy loading terpisah
      */
     @Query("SELECT new com.sandy.project.dto.query.TeacherQueryDTO(" +
-            "t.secureId, t.name, t.gender, t.birthDate, t.address) " +
+            "t.secureId, t.name, t.address, t.birthDate, t.gender) " +
             "FROM Teacher t " +
             "WHERE t.deleted = false")
     List<TeacherQueryDTO> findAllTeacherQueryDTO();
     
     /**
+     * Fetch Teachers dengan pagination dan JPA Projection
+     */
+    @Query("SELECT new com.sandy.project.dto.query.TeacherQueryDTO(" +
+            "t.secureId, t.name, t.address, t.birthDate, t.gender) " +
+            "FROM Teacher t " +
+            "WHERE t.deleted = false")
+    Page<TeacherQueryDTO> findAllTeacherQueryDTOPaged(Pageable pageable);
+    
+    /**
      * Search Teachers by name dengan JPA Projection
      */
     @Query("SELECT new com.sandy.project.dto.query.TeacherQueryDTO(" +
-            "t.secureId, t.name, t.gender, t.birthDate, t.address) " +
+            "t.secureId, t.name, t.address, t.birthDate, t.gender) " +
             "FROM Teacher t " +
             "WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :name, '%')) AND t.deleted = false")
-    List<TeacherQueryDTO> findTeacherQueryDTOByNameContaining(String name);
+    List<TeacherQueryDTO> findTeacherQueryDTOByNameContaining(@Param("name") String name);
  
     // ========================================
     // BASIC QUERY - Cari berdasarkan secureId

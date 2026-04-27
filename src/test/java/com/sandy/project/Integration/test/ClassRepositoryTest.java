@@ -107,4 +107,48 @@ public class ClassRepositoryTest extends BaseIntegrationTest {
         assertTrue(selectFase2 >= 1,
             "Lazy loading homeroomTeacher harus memicu minimal 1 SELECT tambahan (N+1)");
     }
+
+    @Test
+    @DisplayName("✅ JPA Projection: findAllClassQueryDTO() → hanya 1 SELECT dengan LEFT JOIN")
+    void testFindAllClassQueryDTO_shouldExecuteOnlyOneQuery() {
+
+        log.warn("\n\n" +
+            "╔══════════════════════════════════════════════════════════════╗\n" +
+            "║          TEST JPA PROJECTION - SOLUSI N+1 PROBLEM            ║\n" +
+            "╠══════════════════════════════════════════════════════════════╣\n" +
+            "║  Method: findAllClassQueryDTO()                               ║\n" +
+            "║  Ekspektasi: HANYA 1 SELECT dengan LEFT JOIN                 ║\n" +
+            "╚══════════════════════════════════════════════════════════════╝\n");
+
+        var results = classRepository.findAllClassQueryDTO();
+
+        long selectCount = QueryCountAssert.getSelectCount();
+
+        StringBuilder detail = new StringBuilder();
+        for (var dto : results) {
+            detail.append(String.format(
+                "  class=%-20s teacher=%-20s%n",
+                "'" + dto.className() + "'",
+                "'" + (dto.homeroomTeacherName() != null ? dto.homeroomTeacherName() : "(no teacher)") + "'"));
+        }
+
+        log.warn("\n" +
+            "╔══════════════════════════════════════════════════════════════╗\n" +
+            "║          HASIL QUERY JPA PROJECTION                           ║\n" +
+            "╠══════════════════════════════════════════════════════════════╣\n" +
+            "║  Total SELECT     → {} query (✅ N+1 SOLVED!)                ║\n" +
+            "║  Class dimuat     → {}                                        ║\n" +
+            "╠══════════════════════════════════════════════════════════════╣\n" +
+            "║  Detail per class:                                           ║\n" +
+            "{}║                                                              ║\n" +
+            "╠══════════════════════════════════════════════════════════════╣\n" +
+            "║  Kesimpulan: JPA Projection menggunakan 1 query JOIN         ║\n" +
+            "║              untuk fetch Class + Teacher sekaligus            ║\n" +
+            "╚══════════════════════════════════════════════════════════════╝\n",
+            selectCount, results.size(), detail.toString());
+
+        assertFalse(results.isEmpty(), "Harus ada data class dari test-data.sql");
+        assertEquals(1, selectCount,
+            "JPA Projection harus menghasilkan HANYA 1 SELECT query (bukan N+1)");
+    }
 }

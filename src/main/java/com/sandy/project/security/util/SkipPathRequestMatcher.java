@@ -24,7 +24,6 @@ public class SkipPathRequestMatcher implements RequestMatcher {
 				.collect(Collectors.toList());
 		processingMatcher= new OrRequestMatcher(processing);
 	}
-
 	@Override
 	public boolean matches(HttpServletRequest request) {
 		if(skipMatcher.matches(request)) {

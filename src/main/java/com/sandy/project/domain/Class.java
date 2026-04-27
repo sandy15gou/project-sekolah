@@ -23,7 +23,6 @@ public class Class extends AbstractBaseEntity {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "class_generator")
     @SequenceGenerator(name = "class_generator", sequenceName = "class_seq")
     private Long id;
-    
     @Column(name = "secure_id", nullable = false, unique = true)
     private String secureId;
     

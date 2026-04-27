@@ -12,7 +12,7 @@ public interface ScoreService {
     
     // ========================================
     // CREATE - Input banyak nilai sekaligus
-    // ========================================
+    
     void createNewScore(List<ScoreCreateDTO> dtos);
     
     // ========================================

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -71,4 +72,40 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long>, JpaSp
         WHERE sch.deleted = false
     """)
     List<ScheduleQueryDTO> findAllScheduleQueryDTO();
+    
+    /**
+     * Fetch Schedules dengan pagination dan JPA Projection
+     */
+    @Query("""
+        SELECT new com.sandy.project.dto.query.ScheduleQueryDTO(
+            sch.secureId, sch.day, sch.startTime, sch.endTime, sch.semester,
+            c.secureId, c.className,
+            sub.secureId, sub.name,
+            t.secureId, t.name
+        )
+        FROM Schedule sch
+        LEFT JOIN sch.clazz c
+        LEFT JOIN sch.subject sub
+        LEFT JOIN sch.teacher t
+        WHERE sch.deleted = false
+    """)
+    Page<ScheduleQueryDTO> findAllScheduleQueryDTOPaged(Pageable pageable);
+    
+    /**
+     * Fetch single Schedule by secureId dengan JPA Projection
+     */
+    @Query("""
+        SELECT new com.sandy.project.dto.query.ScheduleQueryDTO(
+            sch.secureId, sch.day, sch.startTime, sch.endTime, sch.semester,
+            c.secureId, c.className,
+            sub.secureId, sub.name,
+            t.secureId, t.name
+        )
+        FROM Schedule sch
+        LEFT JOIN sch.clazz c
+        LEFT JOIN sch.subject sub
+        LEFT JOIN sch.teacher t
+        WHERE sch.secureId = :secureId AND sch.deleted = false
+    """)
+    Optional<ScheduleQueryDTO> findScheduleQueryDTOBySecureId(@Param("secureId") String secureId);
 }

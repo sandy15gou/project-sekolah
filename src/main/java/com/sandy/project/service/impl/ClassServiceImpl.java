@@ -2,9 +2,7 @@ package com.sandy.project.service.impl;
 
 import com.sandy.project.domain.Class;
 import com.sandy.project.domain.Student;
-import com.sandy.project.domain.Teacher;
 import com.sandy.project.domain.Schedule;
-import com.sandy.project.domain.Subject;
 import com.sandy.project.dto.*;
 import com.sandy.project.dto.query.ClassQueryDTO;
 import com.sandy.project.exception.ResourceNotFoundException;
@@ -12,7 +10,6 @@ import com.sandy.project.repository.ClassRepository;
 import com.sandy.project.repository.StudentRepository;
 import com.sandy.project.repository.TeacherRepository;
 import com.sandy.project.repository.ScheduleRepository;
-import com.sandy.project.repository.SubjectRepository;
 import com.sandy.project.service.ClassService;
 import com.sandy.project.specification.ClassSpecification;
 import lombok.AllArgsConstructor;
@@ -38,7 +35,6 @@ public class ClassServiceImpl implements ClassService {
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
     private final ScheduleRepository scheduleRepository;
-    private final SubjectRepository subjectRepository;
     
     private static final List<String> ALLOWED_SORT_FIELDS =
             Arrays.asList("className", "gradeLevel", "academicYear", "createdAt");
@@ -176,7 +172,7 @@ public class ClassServiceImpl implements ClassService {
         // Subjects (unique from schedules)
         List<SubjectDetailDTO> subjectDTOs = schedules.stream()
                 .map(Schedule::getSubject)
-                .filter(subject -> subject != null)
+                .filter(java.util.Objects::nonNull)
                 .distinct()
                 .map(subject -> {
                     SubjectDetailDTO subjectDto = new SubjectDetailDTO();
@@ -206,7 +202,7 @@ public class ClassServiceImpl implements ClassService {
         // All Teachers teaching in this class (unique from schedules)
         List<TeacherDetailDTO> teacherDTOs = schedules.stream()
                 .map(Schedule::getTeacher)
-                .filter(teacher -> teacher != null)
+                .filter(java.util.Objects::nonNull)
                 .distinct()
                 .map(teacher -> {
                     TeacherDetailDTO tDto = new TeacherDetailDTO();

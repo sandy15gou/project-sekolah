@@ -95,6 +95,7 @@ public class TeacherServiceImpl implements TeacherService {
         dto.setSecureId(queryDTO.secureId());
         dto.setTeacherName(queryDTO.name());
         dto.setTeacherGender(queryDTO.gender());
+        // Convert LocalDate dari QueryDTO ke Long (epoch) untuk DetailDTO
         dto.setTeacherBirthDate(queryDTO.birthDate() != null ? queryDTO.birthDate().toEpochDay() : null);
         dto.setTeacherAddress(queryDTO.address());
         return dto;
