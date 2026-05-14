@@ -1,7 +1,6 @@
 package com.sandy.project.domain;
 
 import org.springframework.security.core.GrantedAuthority;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -13,7 +12,7 @@ import lombok.Data;
 @Data
 @Table(name = "role")
 @Entity
-public class Role implements GrantedAuthority{
+public class Role implements GrantedAuthority {
 
     /**
      *
@@ -29,6 +28,6 @@ public class Role implements GrantedAuthority{
 
     @Override
     public String getAuthority() {
-        return "ROLE_"+name;
+        return "ROLE_" + name;
     }
 }

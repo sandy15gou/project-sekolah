@@ -7,14 +7,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public class JwtAuthenticationToken extends AbstractAuthenticationToken {
-	
+
 	private RawAccessJwtToken rawAccessJwtToken;
-	
+
 	private UserDetails userDetails;
-	
+
 	public JwtAuthenticationToken(RawAccessJwtToken token) {
 		super(null);
-		this.rawAccessJwtToken=token;
+		this.rawAccessJwtToken = token;
 		super.setAuthenticated(false);
 	}
 
@@ -42,7 +42,5 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 		super.eraseCredentials();
 		this.rawAccessJwtToken = null;
 	}
-	
-	
 
 }

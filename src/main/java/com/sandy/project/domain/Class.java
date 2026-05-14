@@ -25,37 +25,33 @@ public class Class extends AbstractBaseEntity {
     private Long id;
     @Column(name = "secure_id", nullable = false, unique = true)
     private String secureId;
-    
+
     @Column(name = "class_name", nullable = false)
     private String className;
-    
+
     @Column(name = "grade_level", nullable = false)
     private String gradeLevel;
-    
+
     @Column(name = "academic_year", nullable = false)
     private String academicYear;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "homeroom_teacher_id")
     private Teacher homeroomTeacher;
-    
+
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "class_students",
-        joinColumns = @JoinColumn(name = "class_id"),
-        inverseJoinColumns = @JoinColumn(name = "student_id")
-    )
+    @JoinTable(name = "class_students", joinColumns = @JoinColumn(name = "class_id"), inverseJoinColumns = @JoinColumn(name = "student_id"))
     private List<Student> students;
-    
+
     @OneToMany(mappedBy = "clazz", fetch = FetchType.LAZY)
     private List<Schedule> schedules;
-    
+
     @Column(name = "max_capacity", columnDefinition = "integer default 30")
     private Integer maxCapacity = 30;
-    
+
     @Column(name = "description")
     private String description;
-    
+
     @Override
     protected void onCreate() {
         super.onCreate();
