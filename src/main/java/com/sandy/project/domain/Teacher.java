@@ -15,13 +15,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamicUpdate
@@ -56,5 +56,23 @@ public class Teacher extends AbstractBaseEntity {
         if (this.secureId == null) {
             this.secureId = UUID.randomUUID().toString();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Teacher{id=" + id + ", secureId=" + secureId
+                + ", name=" + name + ", gender=" + gender + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Teacher other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

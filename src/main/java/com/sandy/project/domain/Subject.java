@@ -1,20 +1,21 @@
 package com.sandy.project.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "subjects")
-public class    Subject extends AbstractBaseEntity {
+public class Subject extends AbstractBaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,6 +30,7 @@ public class    Subject extends AbstractBaseEntity {
     private String description;
 
     // Guru yang eligible untuk mengajar subject ini
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "subject_eligible_teachers",
@@ -43,5 +45,23 @@ public class    Subject extends AbstractBaseEntity {
         if (this.secureId == null) {
             this.secureId = UUID.randomUUID().toString();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Subject{id=" + id + ", secureId=" + secureId
+                + ", name=" + name + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Subject other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

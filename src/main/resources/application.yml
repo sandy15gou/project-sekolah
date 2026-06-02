@@ -18,6 +18,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     database: POSTGRESQL
+    open-in-view: false
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     properties:
@@ -74,4 +75,3 @@ spring:
       on-profile: production
 server:
   port: 8080
-

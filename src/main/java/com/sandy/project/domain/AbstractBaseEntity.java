@@ -4,11 +4,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @MappedSuperclass
 public abstract class AbstractBaseEntity {
 

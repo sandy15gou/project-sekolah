@@ -3,6 +3,7 @@ package com.sandy.project.domain;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import org.hibernate.annotations.DynamicUpdate;
@@ -15,15 +16,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
+
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamicUpdate
@@ -52,14 +55,34 @@ public class Student extends AbstractBaseEntity {
     @Column(name = "address")
     private String address;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id", referencedColumnName = "id")
     private Class studentClass;
     
-    @PrePersist
-    public void prePersist() {
+    @Override
+    protected void onCreate() {
+        super.onCreate();
         if (this.secureId == null) {
             this.secureId = UUID.randomUUID().toString();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Student{id=" + id + ", secureId=" + secureId
+                + ", name=" + name + ", gender=" + gender + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Student other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

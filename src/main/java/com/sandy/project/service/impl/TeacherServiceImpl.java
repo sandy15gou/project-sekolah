@@ -108,7 +108,7 @@ public class TeacherServiceImpl implements TeacherService {
         
         TeacherResponseDTO dto = new TeacherResponseDTO();
         dto.setTeacherName(teacher.getName());
-        dto.setBirthDate(teacher.getBirthDate().toEpochDay());
+        dto.setBirthDate(teacher.getBirthDate() != null ? teacher.getBirthDate().toEpochDay() : null);
         return dto;
         
     }
@@ -140,7 +140,7 @@ public class TeacherServiceImpl implements TeacherService {
         Page<TeacherResponseDTO> dtoPage = teacherPage.map(teacher -> {
             TeacherResponseDTO dto = new TeacherResponseDTO();
             dto.setTeacherName(teacher.getName());
-            dto.setBirthDate(teacher.getBirthDate().toEpochDay());
+            dto.setBirthDate(teacher.getBirthDate() != null ? teacher.getBirthDate().toEpochDay() : null);
             return dto;
         });
         
@@ -173,7 +173,7 @@ public class TeacherServiceImpl implements TeacherService {
         Page<TeacherResponseDTO> dtoPage = teacherPage.map(teacher -> {
             TeacherResponseDTO dto = new TeacherResponseDTO();
             dto.setTeacherName(teacher.getName());
-            dto.setBirthDate(teacher.getBirthDate().toEpochDay());
+            dto.setBirthDate(teacher.getBirthDate() != null ? teacher.getBirthDate().toEpochDay() : null);
             return dto;
         });
         
@@ -208,7 +208,7 @@ public class TeacherServiceImpl implements TeacherService {
         Page<TeacherResponseDTO> dtoPage = teacherPage.map(teacher -> {
             TeacherResponseDTO dto = new TeacherResponseDTO();
             dto.setTeacherName(teacher.getName());
-            dto.setBirthDate(teacher.getBirthDate().toEpochDay());
+            dto.setBirthDate(teacher.getBirthDate() != null ? teacher.getBirthDate().toEpochDay() : null);
             return dto;
         });
         
