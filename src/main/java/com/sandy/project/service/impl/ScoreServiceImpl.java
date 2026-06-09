@@ -154,8 +154,8 @@ public class ScoreServiceImpl implements ScoreService {
         studentRepository.findBySecureId(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with ID: " + studentId));
         
-        // Ambil nilai student di semester tertentu
-        List<Score> scores = scoreRepository.findByStudent_SecureIdAndSemester(studentId, semester);
+        // Ambil nilai student di semester tertentu — dengan eager loading (N+1 fix)
+        List<Score> scores = scoreRepository.findByStudentAndSemesterWithRelationsList(studentId, semester);
         
         return scores.stream()
                 .map(this::convertToResponseDTO)
@@ -221,7 +221,7 @@ public class ScoreServiceImpl implements ScoreService {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
         
         // Query ke database
-        Page<Score> scorePage = scoreRepository.findByDeletedFalse(pageable);
+        Page<Score> scorePage = scoreRepository.findAllWithRelations(pageable);
         
         // Convert ke DTO
         Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
@@ -232,7 +232,7 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     public PagedResponseDTO<ScoreResponseDTO> searchScoresByStudentPaged(String studentSecureId, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Score> scorePage = scoreRepository.findByStudent_SecureIdAndDeletedFalse(studentSecureId, pageable);
+        Page<Score> scorePage = scoreRepository.findByStudentSecureIdWithRelations(studentSecureId, pageable);
         Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -240,7 +240,7 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     public PagedResponseDTO<ScoreResponseDTO> searchScoresBySubjectPaged(String subjectSecureId, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Score> scorePage = scoreRepository.findBySubject_SecureIdAndDeletedFalse(subjectSecureId, pageable);
+        Page<Score> scorePage = scoreRepository.findBySubjectSecureIdWithRelations(subjectSecureId, pageable);
         Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -248,7 +248,7 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     public PagedResponseDTO<ScoreResponseDTO> searchScoresBySemesterPaged(String semester, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Score> scorePage = scoreRepository.findBySemesterAndDeletedFalse(semester, pageable);
+        Page<Score> scorePage = scoreRepository.findBySemesterWithRelations(semester, pageable);
         Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -256,7 +256,7 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     public PagedResponseDTO<ScoreResponseDTO> searchScoresByStudentAndSemesterPaged(String studentSecureId, String semester, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Score> scorePage = scoreRepository.findByStudent_SecureIdAndSemesterAndDeletedFalse(studentSecureId, semester, pageable);
+        Page<Score> scorePage = scoreRepository.findByStudentAndSemesterWithRelations(studentSecureId, semester, pageable);
         Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -264,7 +264,7 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     public PagedResponseDTO<ScoreResponseDTO> searchScoresBySubjectAndSemesterPaged(String subjectSecureId, String semester, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Score> scorePage = scoreRepository.findBySubject_SecureIdAndSemesterAndDeletedFalse(subjectSecureId, semester, pageable);
+        Page<Score> scorePage = scoreRepository.findBySubjectAndSemesterWithRelations(subjectSecureId, semester, pageable);
         Page<ScoreResponseDTO> dtoPage = scorePage.map(this::convertToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }

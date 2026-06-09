@@ -89,12 +89,10 @@ public class ClassServiceImpl implements ClassService {
         ClassQueryDTO queryDTO = classRepository.findClassQueryDTOBySecureId(classId)
                 .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
         
-        // Masih perlu query entity lengkap untuk mendapat students (ManyToMany)
-        Class kelas = classRepository.findBySecureId(classId)
-                .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
+        // OPTIMASI: Query students langsung — tanpa load entity Class lagi (N+1 fix)
+        List<Student> students = studentRepository.findByClassSecureId(classId);
         
         ClassDetailDTO dto = new ClassDetailDTO();
-        // Ambil data dari QueryDTO (sudah ter-JOIN, tidak trigger lazy loading)
         dto.setSecureId(queryDTO.secureId());
         dto.setClassName(queryDTO.className());
         dto.setGradeLevel(queryDTO.gradeLevel());
@@ -107,13 +105,10 @@ public class ClassServiceImpl implements ClassService {
             TeacherDetailDTO teacherDto = new TeacherDetailDTO();
             teacherDto.setSecureId(queryDTO.homeroomTeacherSecureId());
             teacherDto.setTeacherName(queryDTO.homeroomTeacherName());
-            // Jika butuh data lengkap teacher, harus query terpisah atau buat TeacherQueryDTO
             dto.setHomeroomTeacher(teacherDto);
         }
-        
         // Students
-        List<StudentDetailDTO> studentDTOs = kelas.getStudents() != null
-                ? kelas.getStudents().stream().map(student -> {
+        List<StudentDetailDTO> studentDTOs = students.stream().map(student -> {
             StudentDetailDTO studentDto = new StudentDetailDTO();
             studentDto.setSecureId(student.getSecureId());
             studentDto.setStudentId(student.getId().toString());
@@ -122,7 +117,7 @@ public class ClassServiceImpl implements ClassService {
             studentDto.setStudentGender(student.getGender());
             studentDto.setStudentAddress(student.getAddress());
             return studentDto;
-        }).toList() : new ArrayList<>();
+        }).toList();
         dto.setStudents(studentDTOs);
         
         // Schedules

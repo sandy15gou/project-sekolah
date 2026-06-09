@@ -7,7 +7,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -161,4 +163,36 @@ public interface ScoreRepository extends JpaRepository<Score, Long>, JpaSpecific
 
     // Filter by Subject AND Semester (combined filter)
     Page<Score> findBySubject_SecureIdAndSemesterAndDeletedFalse(String subjectSecureId, String semester, Pageable pageable);
+
+    // ========== PAGINATION WITH EAGER LOADING (N+1 FIX) ==========
+    
+    @EntityGraph(attributePaths = {"student", "subject"})
+    @Query("SELECT s FROM Score s WHERE s.deleted = false")
+    Page<Score> findAllWithRelations(Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"student", "subject"})
+    @Query("SELECT s FROM Score s WHERE s.student.secureId = :studentSecureId AND s.deleted = false")
+    Page<Score> findByStudentSecureIdWithRelations(@Param("studentSecureId") String studentSecureId, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"student", "subject"})
+    @Query("SELECT s FROM Score s WHERE s.subject.secureId = :subjectSecureId AND s.deleted = false")
+    Page<Score> findBySubjectSecureIdWithRelations(@Param("subjectSecureId") String subjectSecureId, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"student", "subject"})
+    @Query("SELECT s FROM Score s WHERE s.semester = :semester AND s.deleted = false")
+    Page<Score> findBySemesterWithRelations(@Param("semester") String semester, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"student", "subject"})
+    @Query("SELECT s FROM Score s WHERE s.student.secureId = :studentSecureId AND s.semester = :semester AND s.deleted = false")
+    Page<Score> findByStudentAndSemesterWithRelations(@Param("studentSecureId") String studentSecureId, @Param("semester") String semester, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"student", "subject"})
+    @Query("SELECT s FROM Score s WHERE s.subject.secureId = :subjectSecureId AND s.semester = :semester AND s.deleted = false")
+    Page<Score> findBySubjectAndSemesterWithRelations(@Param("subjectSecureId") String subjectSecureId, @Param("semester") String semester, Pageable pageable);
+    
+    // ========== EAGER LOADING FOR LIST QUERY (N+1 FIX) ==========
+    
+    @EntityGraph(attributePaths = {"student", "subject"})
+    @Query("SELECT s FROM Score s WHERE s.student.secureId = :studentSecureId AND s.semester = :semester AND s.deleted = false")
+    List<Score> findByStudentAndSemesterWithRelationsList(@Param("studentSecureId") String studentSecureId, @Param("semester") String semester);
 }

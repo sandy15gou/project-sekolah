@@ -50,34 +50,11 @@ public class SubjectServiceImpl implements SubjectService {
     
     @Override
     public List<SubjectDetailDTO> findAllSubjects() {
-        // OPTIMASI dengan JPA Projection - menghindari N+1 problem
-        // 1. Fetch semua subjects tanpa teachers (1 query)
-        List<com.sandy.project.dto.query.SubjectQueryDTO> queryDTOs = subjectRepository.findAllSubjectQueryDTO();
+        // OPTIMASI: JOIN FETCH - 1 query ambil semua subjects + teachers sekaligus
+        List<Subject> subjects = subjectRepository.findAllWithTeachers();
         
-        // 2. Convert ke DetailDTO dan fetch teachers untuk masing-masing subject
-        return queryDTOs.stream()
-                .map(queryDTO -> {
-                    SubjectDetailDTO dto = new SubjectDetailDTO();
-                    dto.setSecureId(queryDTO.secureId());
-                    dto.setName(queryDTO.name());
-                    dto.setDescription(queryDTO.description());
-                    
-                    List<com.sandy.project.dto.query.TeacherQueryDTO> teacherQueryDTOs =
-                        subjectRepository.findEligibleTeachersBySubjectSecureId(queryDTO.secureId());
-                    
-                    List<TeacherDetailDTO> teachers = teacherQueryDTOs.stream()
-                            .map(t -> {
-                                TeacherDetailDTO teacher = new TeacherDetailDTO();
-                                teacher.setSecureId(t.secureId());
-                                teacher.setTeacherName(t.name());
-                                teacher.setTeacherGender(t.gender());
-                                return teacher;
-                            })
-                            .collect(Collectors.toList());
-                    
-                    dto.setEligibleTeachers(teachers);
-                    return dto;
-                })
+        return subjects.stream()
+                .map(this::mapToDetailDTO)
                 .collect(Collectors.toList());
     }
     

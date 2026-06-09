@@ -41,9 +41,9 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public ScheduleDetailDTO findScheduleDetail(String scheduleId) {
-        Schedule schedule = scheduleRepository.findBySecureId(scheduleId)
+        ScheduleQueryDTO queryDTO = scheduleRepository.findScheduleQueryDTOBySecureId(scheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found"));
-        return mapToDetailDTO(schedule);
+        return mapQueryDTOToDetailDTO(queryDTO);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
 
         // Query ke database
-        Page<Schedule> schedulePage = scheduleRepository.findByDeletedFalse(pageable);
+        Page<Schedule> schedulePage = scheduleRepository.findAllWithRelations(pageable);
 
         // Convert ke DTO
         Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
@@ -134,7 +134,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByDayPaged(String day, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Schedule> schedulePage = scheduleRepository.findByDayContainingIgnoreCaseAndDeletedFalse(day, pageable);
+        Page<Schedule> schedulePage = scheduleRepository.findByDayWithRelations(day, pageable);
         Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -142,7 +142,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesBySemesterPaged(String semester, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Schedule> schedulePage = scheduleRepository.findBySemesterContainingIgnoreCaseAndDeletedFalse(semester, pageable);
+        Page<Schedule> schedulePage = scheduleRepository.findBySemesterWithRelations(semester, pageable);
         Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -150,7 +150,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByClassPaged(String classSecureId, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Schedule> schedulePage = scheduleRepository.findByClazz_SecureIdAndDeletedFalse(classSecureId, pageable);
+        Page<Schedule> schedulePage = scheduleRepository.findByClassSecureIdWithRelations(classSecureId, pageable);
         Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -158,7 +158,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesBySubjectPaged(String subjectSecureId, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Schedule> schedulePage = scheduleRepository.findBySubject_SecureIdAndDeletedFalse(subjectSecureId, pageable);
+        Page<Schedule> schedulePage = scheduleRepository.findBySubjectSecureIdWithRelations(subjectSecureId, pageable);
         Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -166,7 +166,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByTeacherPaged(String teacherSecureId, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Schedule> schedulePage = scheduleRepository.findByTeacher_SecureIdAndDeletedFalse(teacherSecureId, pageable);
+        Page<Schedule> schedulePage = scheduleRepository.findByTeacherSecureIdWithRelations(teacherSecureId, pageable);
         Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }
@@ -174,8 +174,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public PagedResponseDTO<ScheduleResponseDTO> searchSchedulesByDayAndSemesterPaged(String day, String semester, int page, int size, String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-        Page<Schedule> schedulePage = scheduleRepository.findByDayContainingIgnoreCaseAndSemesterContainingIgnoreCaseAndDeletedFalse(
-                day, semester, pageable);
+        Page<Schedule> schedulePage = scheduleRepository.findByDayAndSemesterWithRelations(day, semester, pageable);
         Page<ScheduleResponseDTO> dtoPage = schedulePage.map(this::mapToResponseDTO);
         return new PagedResponseDTO<>(dtoPage);
     }

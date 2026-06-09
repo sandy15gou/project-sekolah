@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -51,6 +52,36 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long>, JpaSp
     // Filter by Day AND Semester (combined filter)
     Page<Schedule> findByDayContainingIgnoreCaseAndSemesterContainingIgnoreCaseAndDeletedFalse(
             String day, String semester, Pageable pageable);
+
+    // ========== PAGINATION WITH EAGER LOADING (N+1 FIX) ==========
+    
+    @EntityGraph(attributePaths = {"clazz", "subject", "teacher"})
+    @Query("SELECT s FROM Schedule s WHERE s.deleted = false")
+    Page<Schedule> findAllWithRelations(Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"clazz", "subject", "teacher"})
+    @Query("SELECT s FROM Schedule s WHERE LOWER(s.day) LIKE LOWER(CONCAT('%', :day, '%')) AND s.deleted = false")
+    Page<Schedule> findByDayWithRelations(@Param("day") String day, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"clazz", "subject", "teacher"})
+    @Query("SELECT s FROM Schedule s WHERE LOWER(s.semester) LIKE LOWER(CONCAT('%', :semester, '%')) AND s.deleted = false")
+    Page<Schedule> findBySemesterWithRelations(@Param("semester") String semester, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"clazz", "subject", "teacher"})
+    @Query("SELECT s FROM Schedule s WHERE s.clazz.secureId = :classSecureId AND s.deleted = false")
+    Page<Schedule> findByClassSecureIdWithRelations(@Param("classSecureId") String classSecureId, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"clazz", "subject", "teacher"})
+    @Query("SELECT s FROM Schedule s WHERE s.subject.secureId = :subjectSecureId AND s.deleted = false")
+    Page<Schedule> findBySubjectSecureIdWithRelations(@Param("subjectSecureId") String subjectSecureId, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"clazz", "subject", "teacher"})
+    @Query("SELECT s FROM Schedule s WHERE s.teacher.secureId = :teacherSecureId AND s.deleted = false")
+    Page<Schedule> findByTeacherSecureIdWithRelations(@Param("teacherSecureId") String teacherSecureId, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"clazz", "subject", "teacher"})
+    @Query("SELECT s FROM Schedule s WHERE LOWER(s.day) LIKE LOWER(CONCAT('%', :day, '%')) AND LOWER(s.semester) LIKE LOWER(CONCAT('%', :semester, '%')) AND s.deleted = false")
+    Page<Schedule> findByDayAndSemesterWithRelations(@Param("day") String day, @Param("semester") String semester, Pageable pageable);
 
     // ========== JPA PROJECTION METHODS (N+1 SOLUTION) ==========
     

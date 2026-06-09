@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
 
@@ -17,27 +15,11 @@ import java.util.Arrays;
  * - Frontend yang berjalan di localhost:3000, localhost:8081, dll dapat mengakses API
  * - Semua HTTP methods (GET, POST, PUT, DELETE, etc)
  * - Headers yang diperlukan untuk autentikasi (Authorization)
+ *
+ * CORS dihandle oleh Spring Security Filter Chain melalui bean CorsConfigurationSource.
  */
 @Configuration
-public class CorsConfig implements WebMvcConfigurer {
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins(
-                    "http://localhost:3000",
-                    "http://localhost:8081",
-                    "http://127.0.0.1:3000",
-                    "http://127.0.0.1:8081",
-                    "http://localhost:5500",  // Live Server default port
-                    "http://127.0.0.1:5500"
-                )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-                .allowedHeaders("*")
-                .exposedHeaders("Authorization")
-                .allowCredentials(true)
-                .maxAge(3600);
-    }
+public class CorsConfig {
 
     /**
      * Bean CorsConfigurationSource untuk Security Filter Chain

@@ -35,14 +35,16 @@ public class ScheduleSpecification {
             // Wadah untuk menampung semua kondisi WHERE
             List<Predicate> predicates = new ArrayList<>();
             
+            // OPTIMASI N+1: Eager fetch relationships untuk data query (bukan count query)
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                root.fetch("clazz", jakarta.persistence.criteria.JoinType.LEFT);
+                root.fetch("subject", jakarta.persistence.criteria.JoinType.LEFT);
+                root.fetch("teacher", jakarta.persistence.criteria.JoinType.LEFT);
+            }
+            
             // ════════════════════════════════════════════════════════════════════
             // KONDISI 1: Always filter by deleted = false (soft delete)
             // ════════════════════════════════════════════════════════════════════
-            // Breakdown:
-            // - criteriaBuilder.equal() → buat kondisi "="
-            // - root.get("deleted") → ambil kolom "deleted" dari tabel schedule
-            // - false → nilai yang dicari
-            // SQL: WHERE deleted = false
             predicates.add(criteriaBuilder.equal(root.get("deleted"), false));
             
             // ════════════════════════════════════════════════════════════════════

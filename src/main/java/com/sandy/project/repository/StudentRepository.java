@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 
 public interface StudentRepository extends JpaRepository<Student, Long>, JpaSpecificationExecutor<Student> {
@@ -78,4 +79,13 @@ public interface StudentRepository extends JpaRepository<Student, Long>, JpaSpec
     // Pagination: Search by name dengan LIKE dan soft delete check
     // Contoh usage: findByNameContainingAndDeletedFalse("John", pageable)
     Page<Student> findByNameContainingAndDeletedFalse(String name, Pageable pageable);
+    
+    // ========== QUERY BY CLASS (N+1 FIX) ==========
+    
+    /**
+     * Cari students berdasarkan class secureId — menghindari duplikat query pada ClassService.findClassDetail()
+     * Tidak perlu load entity Class terlebih dahulu, query langsung via JOIN
+     */
+    @Query("SELECT s FROM Student s JOIN s.studentClass c WHERE c.secureId = :classSecureId AND s.deleted = false")
+    List<Student> findByClassSecureId(@Param("classSecureId") String classSecureId);
 }
