@@ -11,7 +11,7 @@ spring:
       connection-timeout: 600000
       idle-timeout: 600000
       max-lifetime: 1800000
-      maximum-pool-size: 10
+      maximum-pool-size: 5
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/project_sekolah}
     username: ${SPRING_DATASOURCE_USERNAME:sandy}
     password: ${SPRING_DATASOURCE_PASSWORD:015015}
@@ -61,7 +61,7 @@ spring:
     activate:
       on-profile: development
 server:
-  port: 8003
+  port: ${SERVER_PORT:8090}
 
 app:
   welcome-text: Hello World from Tedy, this is development server
@@ -74,4 +74,5 @@ spring:
     activate:
       on-profile: production
 server:
-  port: 8080
+  port: ${SERVER_PORT:8090}
+

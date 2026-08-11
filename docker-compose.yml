@@ -4,6 +4,7 @@ services:
   postgres-db:
     image: postgres:15-alpine
     container_name: postgres-container
+    restart: unless-stopped
     environment:
       POSTGRES_DB: project_sekolah
       POSTGRES_USER: sandy
@@ -17,16 +18,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # Optimasi memory untuk VPS 1GB RAM
+    command: >
+      postgres
+        -c shared_buffers=128MB
+        -c effective_cache_size=256MB
+        -c work_mem=4MB
+        -c maintenance_work_mem=64MB
+        -c max_connections=30
 
   spring-app:
     build: .
     container_name: spring-boot-container
+    restart: unless-stopped
     depends_on:
       postgres-db:
         condition: service_healthy
     ports:
-      - "8003:8003"
+      - "8090:8090"
     environment:
+      SERVER_PORT: "8090"
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/project_sekolah
       SPRING_DATASOURCE_USERNAME: sandy
