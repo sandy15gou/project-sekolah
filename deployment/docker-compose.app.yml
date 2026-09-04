@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  spring-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: spring-sekolah
+    restart: unless-stopped
+    env_file: .env.app
+    ports:
+      - "8090:8090"
+    environment:
+      SERVER_PORT: "8090"
+      SPRING_PROFILES_ACTIVE: production
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://${DB_HOST}:5432/project_sekolah"
+      SPRING_DATASOURCE_USERNAME: sandy
+      SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD:-015015}"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+    networks:
+      - appnet
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-sekolah
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - spring-app
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
