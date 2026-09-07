@@ -21,6 +21,9 @@ import static org.springframework.security.config.Customizer.withDefaults;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsConfigurationSource;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sandy.project.security.filter.JwtAuthProcessingFilter;
 import com.sandy.project.security.filter.UsernamePasswordAuthProcessingFilter;
@@ -68,6 +71,9 @@ public class SecurityConfig {
 	@Autowired
 	private JwtAuthenticationProvider jwtAuthenticationProvider;
 
+	@Autowired
+	private CorsConfigurationSource corsConfigurationSource;
+
 	@Bean
 	public AuthenticationSuccessHandler usernamePasswordAuthSuccessHandler(ObjectMapper objectMapper, JWTTokenFactory jwtTokenFactory) {
 		return new UsernamePasswordAuthSucessHandler(objectMapper, jwtTokenFactory);
@@ -112,8 +118,14 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http,
 			UsernamePasswordAuthProcessingFilter usernamePasswordAuthProcessingFilter,
 			JwtAuthProcessingFilter jwtAuthProcessingFilter) throws Exception {
-		http.authorizeHttpRequests(auth -> auth.requestMatchers(PERMIT_ENDPOINT_LIST.toArray(new String[0])).permitAll()
-				.requestMatchers(V1_URL, V2_URL).authenticated()).csrf(csrf -> csrf.disable())
+		http
+				.cors(cors -> cors.configurationSource(corsConfigurationSource))
+				.csrf(csrf -> csrf.disable())
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers(PERMIT_ENDPOINT_LIST.toArray(new String[0])).permitAll()
+						.requestMatchers(V1_URL, V2_URL).authenticated()
+				)
 				.sessionManagement(
 						(sessionManagement) -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		

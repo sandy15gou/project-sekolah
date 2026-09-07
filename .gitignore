@@ -38,8 +38,10 @@ PAGINATION_GUIDE.md
 ### Frontend ###
 frontend/node_modules/
 frontend/.next/
+frontend/out/
 frontend/.env.local
 frontend/.env*.local
 node_modules/
 .next/
+out/
 
