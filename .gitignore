@@ -35,3 +35,11 @@ build/
 ### Custom ###
 PAGINATION_GUIDE.md
 
+### Frontend ###
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/.env*.local
+node_modules/
+.next/
+
