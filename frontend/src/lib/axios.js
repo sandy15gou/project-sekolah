@@ -4,8 +4,15 @@
 import axios from 'axios';
 import { getToken, clearToken } from './auth';
 
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return '';
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090';
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8090',
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -14,6 +21,11 @@ const api = axios.create({
 // --- Request Interceptor: Attach token ---
 api.interceptors.request.use(
   (config) => {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      if (config.baseURL && config.baseURL.includes('localhost')) {
+        config.baseURL = '';
+      }
+    }
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
