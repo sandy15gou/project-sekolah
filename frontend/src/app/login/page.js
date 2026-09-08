@@ -31,7 +31,7 @@ export default function LoginPage() {
       window.location.href = '/dashboard';
     } catch (err) {
       console.error('Login error:', err);
-      const msg = err?.response?.data?.result || err?.details?.[0] || 'Login gagal. Periksa username dan password.';
+      const msg = err?.response?.data?.result || err?.details?.[0] || err?.message || 'Login gagal. Periksa username dan password.';
       setErrorMsg(msg);
       setLoading(false);
     }

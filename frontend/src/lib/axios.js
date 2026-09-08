@@ -50,13 +50,16 @@ api.interceptors.response.use(
     const { status, data } = error.response;
 
     if (status === 401) {
-      clearToken();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      const isLoginRequest = error.config?.url?.includes('/login');
+      if (!isLoginRequest) {
+        clearToken();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
       }
-      const authError = new Error('Sesi Anda telah berakhir. Silakan login kembali.');
+      const authError = new Error(data?.result || 'Username atau password salah');
       authError.errorCode = 401;
-      authError.details = ['Unauthorized - Token expired atau tidak valid'];
+      authError.details = [data?.result || 'Username atau password salah'];
       return Promise.reject(authError);
     }
 
