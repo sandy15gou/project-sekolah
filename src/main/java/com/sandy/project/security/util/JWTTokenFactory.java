@@ -24,13 +24,13 @@ public class JWTTokenFactory {
 		Claims claims = Jwts.claims().subject(username)
 		.add("scopes", authorities.stream().map(a->a.getAuthority()).collect(Collectors.toList())).build();
 		
-		//waktu kapan token dibuat
-		LocalDateTime currentTime = LocalDateTime.now();
-		Date currentTimeDate = Date.from(currentTime.atZone(ZoneId.of("Asia/Jakarta")).toInstant());
+		// waktu kapan token dibuat (berdasarkan instant saat ini, timezone-agnostic)
+		java.time.Instant now = java.time.Instant.now();
+		Date currentTimeDate = Date.from(now);
 		
-		//waktu kapan token expired
-		LocalDateTime expiredTime = currentTime.plusMinutes(15);
-		Date expiredTimeDate = Date.from(expiredTime.atZone(ZoneId.of("Asia/Jakarta")).toInstant());
+		// waktu kapan token expired (15 menit dari sekarang)
+		java.time.Instant expired = now.plus(15, java.time.temporal.ChronoUnit.MINUTES);
+		Date expiredTimeDate = Date.from(expired);
 
 		String token = Jwts.builder().claims(claims)
 				.issuer("https://subrutin.com")
